@@ -248,10 +248,9 @@ canvas.simulator {
     text-align: center;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
     
-    /* NEW: Explicitly prevent growing and shrinking as a flex item */
-    flex-grow: 0; 
-    flex-shrink: 0;
-    flex-basis: auto; /* Ensure flex basis is auto, letting height take precedence */
+    /* NEW: Ensure this flex item does not grow or shrink automatically */
+    flex: 0 0 auto; /* Shorthand for flex-grow: 0; flex-shrink: 0; flex-basis: auto; */
+    box-sizing: border-box; /* NEW: Include padding and border in the element's total width and height */
     
     /* Set a default height to prevent stretching, overridden by manual resize */
     height: 250px; /* Adjust this value as needed for a good default visual size */
@@ -261,7 +260,7 @@ canvas.simulator {
 
     /* Resizable properties */
     resize: both; /* Allow resizing in both directions */
-    overflow: hidden; /* NEW: Hide any potential overflow, as JS drawing should fit */
+    overflow: hidden; /* NEW: Hide any content that overflows the div */
     min-width: 200px; /* Prevent it from becoming too small */
     min-height: 150px; /* Prevent it from becoming too small */
 }
@@ -290,7 +289,6 @@ canvas.simulator {
     margin-top: 0; /* Reset margin-top */
     border-radius: 4px;
     display: block;
-    /* The canvas should not automatically grow; its size is managed by JS and parent's explicit height/resize. */
     width: 100%;
     height: 100%;
 }
