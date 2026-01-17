@@ -13,6 +13,7 @@ export class Creature {
      * @param {number} [options.speed=SIM_CONFIG.BASE_SPEED] - Creature's movement speed.
      * @param {number} [options.size=SIM_CONFIG.CREATURE_BASE_RADIUS] - Creature's size (radius).
      * @param {NeuralNetwork} [options.brain=null] - Creature's neural network. If null, a new one is created.
+     * @param {number} [options.hiddenNodes=SIM_CONFIG.MIN_BRAIN_HIDDEN_NODES] - Number of hidden nodes for the creature's brain.
      * @param {number} [options.visionRange=SIM_CONFIG.INITIAL_VISION_RANGE] - Creature's vision range.
      * @param {number} [options.lifespan=SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60] - Creature's maximum age in frames.
      * @param {number} [options.biomePreference=0] - Creature's preferred biome type index.
@@ -24,6 +25,7 @@ export class Creature {
      * @param {number} [options.clutchSize=SIM_CONFIG.INITIAL_CLUTCH_SIZE] - Number of offspring per reproduction.
      * @param {number} [options.sensoryRange=SIM_CONFIG.INITIAL_SENSORY_RANGE] - Range for non-visual senses.
      * @param {number} [options.optimalTemperature=SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE] - Creature's optimal temperature (normalized 0-1).
+     * @param {number} [options.armor=SIM_CONFIG.DEFAULT_INITIAL_ARMOR] - NEW: Creature's armor value.
      */
     constructor(options) {
         this.id = Math.random().toString(36).substring(2, 9); // Unique ID for info panel
@@ -54,10 +56,12 @@ export class Creature {
         this.clutchSize = options.clutchSize;
         this.sensoryRange = options.sensoryRange; // For scent/hearing
         this.optimalTemperature = options.optimalTemperature; // Normalized 0-1
+        this.armor = options.armor; // NEW: Armor trait
 
+        // Brain initialization, passing hiddenNodes
         this.brain = options.brain || new NeuralNetwork(
             SIM_CONFIG.BRAIN_INPUT_NODES,
-            SIM_CONFIG.BRAIN_HIDDEN_NODES,
+            options.hiddenNodes || SIM_CONFIG.MIN_BRAIN_HIDDEN_NODES, // Use provided hiddenNodes or default min
             SIM_CONFIG.BRAIN_OUTPUT_NODES
         );
         this.trail = []; // For visual trails
@@ -68,7 +72,7 @@ export class Creature {
      * Determines the current biome the creature is in.
      * @param {number[][]} biomeMap - The global biome map.
      * @returns {object} The biome type object.
-     */
+     * */
     getBiome(biomeMap) {
         const biomeX = Math.floor(this.x / (SIM_CONFIG.WORLD_WIDTH / SIM_CONFIG.BIOME_GRID_X));
         const biomeY = Math.floor(this.y / (SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y));
@@ -84,7 +88,7 @@ export class Creature {
      * @param {number[][]} biomeMap - The global biome map.
      * @param {number} currentTemperature - The normalized current temperature of the world.
      * @returns {{turnRate: number, speedAdjustment: number}} The actions determined by the brain.
-     */
+     * */
     think(globalFood, globalCreatures, biomeMap, currentTemperature) {
         // Gather inputs (normalized 0-1)
         let foodAngleInput = 0.5; // Neutral if no food
@@ -209,7 +213,7 @@ export class Creature {
      * Draws the creature on the canvas.
      * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
      * @param {boolean} showHealthBars - Whether to draw health bars.
-     */
+     * */
     draw(ctx, showHealthBars) {
         if (!this.isAlive) {
             // Draw dead creatures as smaller, greyed-out circles
@@ -280,7 +284,7 @@ export class Creature {
      * @param {number} foodIndex - The index of the food item in the global food array.
      * @param {Food[]} globalFood - The global food array.
      * @param {number[][]} biomeMap - The global biome map.
-     */
+     * */
     eat(foodIndex, globalFood, biomeMap) {
         const foodItem = globalFood[foodIndex];
 
@@ -305,7 +309,7 @@ export class Creature {
      * New: Handles combat with another creature.
      * @param {Creature} targetCreature - The creature being attacked.
      * @returns {boolean} True if combat occurred, false otherwise.
-     */
+     * */
     engageCombat(targetCreature) {
         if (!this.isAlive || !targetCreature.isAlive || this.dietType !== 1) { // Only alive carnivores can attack
             return false;
@@ -325,7 +329,9 @@ export class Creature {
 
         // Calculate damage
         const rawDamage = this.attackPower * SIM_CONFIG.COMBAT_DAMAGE_MULTIPLIER;
-        const damageDealt = Math.max(0, rawDamage - targetCreature.defense);
+        // NEW: Apply armor for damage reduction
+        const damageReduction = targetCreature.armor * SIM_CONFIG.ARMOR_DAMAGE_REDUCTION_MULTIPLIER;
+        const damageDealt = Math.max(0, rawDamage - targetCreature.defense - damageReduction);
 
         targetCreature.energy -= damageDealt;
 
@@ -354,7 +360,7 @@ export class Creature {
      * @param {number} mutationRate - Current mutation rate.
      * @param {number} mutationStrength - Current mutation strength.
      * @param {number} currentTemperature - The normalized current temperature of the world.
-     */
+     * */
     update(biomeMap, globalFood, globalCreatures, mutationRate, mutationStrength, currentTemperature) {
         this.age++;
         this.currentReproductionCooldown = Math.max(0, this.currentReproductionCooldown - 1);
@@ -423,7 +429,7 @@ export class Creature {
      * Calculates the creature's fitness for selection.
      * @param {number[][]} biomeMap - The global biome map.
      * @returns {number} The calculated fitness score.
-     */
+     * */
     calculateFitness(biomeMap) {
         let baseFitness = this.foodEatenCount * 200; // Increased food reward
         baseFitness += this.age * 0.8; // Reward for surviving longer
@@ -477,6 +483,11 @@ export class Creature {
         const optimalTempDifference = Math.abs(this.optimalTemperature - SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE);
         baseFitness -= optimalTempDifference * 100; // Penalize deviation from default optimal temp
 
+        // NEW: Reward for armor (simple for now: small reward for having some armor, higher values could be penalized for resource cost in complex scenarios)
+        baseFitness += this.armor * 5; // Small reward for having armor
+        if (this.armor > 10) baseFitness -= (this.armor - 10) * 2; // Penalize very high armor (resource cost)
+
+
         return Math.max(0, baseFitness); // Fitness cannot be negative
     }
 
@@ -486,7 +497,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {string} The new mutated color.
-     */
+     * */
     mutateColor(originalColor, mutationRate, mutationStrength) {
         const hex = originalColor.substring(1);
         let r = parseInt(hex.substring(0, 2), 16);
@@ -512,7 +523,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated vision range.
-     */
+     * */
     mutateVisionRange(parentVisionRange, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentVisionRange + (Math.random() - 0.5) * mutationStrength * 50, 50, 300);
@@ -526,7 +537,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated lifespan.
-     */
+     * */
     mutateLifespan(parentLifespan, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentLifespan + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.LIFESPAN_MUTATION_STRENGTH_MULTIPLIER * 60, // Multiply by 60 for seconds to frames
@@ -543,7 +554,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated biome preference.
-     */
+     * */
     mutateBiomePreference(parentBiomePreference, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             const numBiomeTypes = BIOME_TYPES.length;
@@ -558,7 +569,7 @@ export class Creature {
      * @param {number} parentDietType - The parent's diet type.
      * @param {number} mutationRate - The current mutation rate.
      * @returns {number} The new mutated diet type.
-     */
+     * */
     mutateDietType(parentDietType, mutationRate) {
         if (Math.random() < mutationRate * SIM_CONFIG.DIET_TYPE_MUTATION_CHANCE_MULTIPLIER) {
             return parentDietType === 0 ? 1 : 0; // Flip between herbivore (0) and carnivore (1)
@@ -572,7 +583,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated attack power.
-     */
+     * */
     mutateAttackPower(parentAttackPower, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentAttackPower + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.ATTACK_POWER_MUTATION_STRENGTH_MULTIPLIER * 10,
@@ -587,7 +598,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated defense.
-     */
+     * */
     mutateDefense(parentDefense, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentDefense + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.DEFENSE_MUTATION_STRENGTH_MULTIPLIER * 10,
@@ -602,7 +613,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated metabolism rate.
-     */
+     * */
     mutateMetabolismRate(parentMetabolismRate, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentMetabolismRate + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.METABOLISM_MUTATION_STRENGTH_MULTIPLIER,
@@ -617,7 +628,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated reproduction cooldown.
-     */
+     * */
     mutateReproductionCooldown(parentReproductionCooldown, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentReproductionCooldown + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.REPRODUCTION_COOLDOWN_MUTATION_STRENGTH_MULTIPLIER,
@@ -632,7 +643,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated clutch size.
-     */
+     * */
     mutateClutchSize(parentClutchSize, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentClutchSize + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH_MULTIPLIER),
@@ -647,7 +658,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated sensory range.
-     */
+     * */
     mutateSensoryRange(parentSensoryRange, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentSensoryRange + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.SENSORY_RANGE_MUTATION_STRENGTH_MULTIPLIER * 10,
@@ -662,7 +673,7 @@ export class Creature {
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
      * @returns {number} The new mutated optimal temperature.
-     */
+     * */
     mutateOptimalTemperature(parentOptimalTemperature, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             return clamp(parentOptimalTemperature + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.OPTIMAL_TEMPERATURE_MUTATION_STRENGTH_MULTIPLIER,
@@ -671,19 +682,36 @@ export class Creature {
         return parentOptimalTemperature;
     }
 
+    /**
+     * NEW: Mutates a creature's armor.
+     * @param {number} parentArmor - The parent's armor.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated armor value.
+     */
+    mutateArmor(parentArmor, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentArmor + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.ARMOR_MUTATION_STRENGTH_MULTIPLIER * 5,
+                0, 20); // Armor can range from 0 to 20
+        }
+        return parentArmor;
+    }
+
 
     /**
      * Creates a clone of the creature for elitism, resetting mutable state.
+     * @param {number} newHiddenNodes - The number of hidden nodes for the cloned creature's brain.
      * @returns {Creature} A new Creature instance that is a clone.
-     */
-    cloneForNextGeneration() {
+     * */
+    cloneForNextGeneration(newHiddenNodes) {
         const clonedCreature = new Creature({
             x: Math.random() * SIM_CONFIG.WORLD_WIDTH, // New random position for next gen
             y: Math.random() * SIM_CONFIG.WORLD_HEIGHT,
             color: this.originalColor, // Keep original color
             speed: this.speed,
             size: this.size,
-            brain: this.brain, // Keep the same brain
+            brain: this.brain.clone(), // NEW: Deep clone the brain for elitism
+            hiddenNodes: newHiddenNodes, // Pass the new hidden node count
             visionRange: this.visionRange,
             lifespan: this.lifespan, // Carry over lifespan
             biomePreference: this.biomePreference, // Carry over biome preference
@@ -695,6 +723,7 @@ export class Creature {
             clutchSize: this.clutchSize, // Carry over clutch size
             sensoryRange: this.sensoryRange, // Carry over sensory range
             optimalTemperature: this.optimalTemperature, // Carry over optimal temperature
+            armor: this.armor, // NEW: Carry over armor
         });
         clonedCreature.fitness = this.fitness; // Carry over fitness for potential re-evaluation or reference
         return clonedCreature;
