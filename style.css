@@ -16,24 +16,24 @@ main {
     display: flex;
     flex-direction: column; /* Stack simulation area and charts area vertically */
     align-items: center; /* Center main content */
-    gap: 20px;
+    gap: 30px; /* Increased gap between main sections */
     width: 100%; /* Take full width */
 }
 
 #simulation-wrapper {
     display: flex;
     justify-content: center; /* Center the three columns */
-    gap: 20px;
+    gap: 30px; /* Increased gap between control/canvas/side panels */
     width: 100%;
     max-width: 1400px; /* Max width for the entire simulation + side panels */
     flex-wrap: wrap; /* Allow wrapping on very small screens, though it's designed for wider screens */
 }
 
-.main-content {
+.main-content { /* This class is now primarily for the canvas itself if it were alone, but within simulation-wrapper it's just the canvas */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 20px; /* Gap between canvas and any other element it might have */
 }
 canvas.simulator {
     border: 2px solid #333; /* Softer border */
@@ -44,7 +44,7 @@ canvas.simulator {
 }
 #controls, .side-panel {
     background-color: #252540; /* Darker panel background */
-    padding: 15px; /* Increased padding */
+    padding: 20px; /* Increased padding */
     border-radius: 8px; /* Rounded corners */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow */
     font-size: 0.95em;
@@ -58,28 +58,27 @@ canvas.simulator {
     min-width: 280px;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Space out control groups */
+    gap: 20px; /* Increased gap between control groups */
 }
 
 .control-group {
     border-bottom: 1px solid #3a3a5e;
-    padding-bottom: 15px;
-    margin-bottom: 15px;
+    padding-bottom: 20px; /* Increased padding below group */
+    margin-bottom: 0; /* Reset margin, gap handles spacing */
 }
 .control-group:last-child {
     border-bottom: none;
-    margin-bottom: 0;
     padding-bottom: 0;
 }
 .control-group h3 {
     color: #BB86FC; /* Light purple for group titles */
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 15px; /* Increased margin below title */
     font-size: 1.1em;
 }
 
 #controls p {
-    margin: 0 0 5px 0;
+    margin: 0 0 8px 0; /* Increased margin below paragraphs */
     color: #b0b0b0; /* Slightly lighter text for status */
 }
 #controls span {
@@ -87,7 +86,7 @@ canvas.simulator {
     color: #f0f0f0;
 }
 #controls button, #controls input[type="range"] {
-    margin: 5px 0; /* Adjust margin */
+    margin: 8px 0; /* Increased margin for buttons and sliders */
     padding: 10px 15px; /* More padding */
     cursor: pointer;
     border: none;
@@ -149,7 +148,7 @@ canvas.simulator {
     color: #e0e0e0;
 }
 #controls .slider-group {
-    margin-bottom: 10px; /* Slightly less margin for sliders within groups */
+    margin-bottom: 15px; /* Increased margin for slider groups */
 }
 #controls input[type="range"] {
     -webkit-appearance: none;
@@ -202,7 +201,7 @@ canvas.simulator {
 .side-panel h2 {
     text-align: center;
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 25px; /* Increased margin below title */
     color: #BB86FC; /* Light purple for side panel title */
     font-size: 1.5em;
 }
@@ -211,11 +210,11 @@ canvas.simulator {
     padding: 15px;
     border-radius: 8px;
     text-align: center;
-    margin-bottom: 15px; /* Space between brain displays */
+    margin-bottom: 20px; /* Increased space between brain displays */
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
 }
 .creature-brain-display h4 {
-    margin: 0 0 10px 0;
+    margin: 0 0 12px 0; /* Increased margin below h4 */
     color: #e0e0e0;
     display: flex;
     align-items: center;
@@ -244,8 +243,8 @@ canvas.simulator {
 #charts-area {
     display: grid;
     /* Responsive grid: 2 columns by default, 1 on smaller screens, 3 on larger */
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* Adjusted minmax for slightly wider charts */
+    gap: 25px; /* Increased gap between charts */
     width: 100%;
     max-width: 1400px; /* Match max-width of simulation-wrapper */
     margin-top: 20px;
@@ -273,11 +272,11 @@ canvas.simulator {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 380px; /* Slightly wider */
+    width: 400px; /* Slightly wider */
     background-color: #252540;
     border-radius: 8px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-    padding: 25px;
+    padding: 30px; /* Increased padding */
     z-index: 1000;
     text-align: left;
     border: 1px solid #3a3a5e;
@@ -291,18 +290,18 @@ canvas.simulator {
     text-align: center;
     color: #FFC107;
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 25px; /* Increased margin below title */
     font-size: 1.4em;
 }
 #creatureInfoPanel h4 {
     color: #BB86FC;
-    margin-top: 15px;
-    margin-bottom: 10px;
+    margin-top: 20px; /* Increased margin above h4 */
+    margin-bottom: 12px; /* Increased margin below h4 */
     border-bottom: 1px solid #3a3a5e;
-    padding-bottom: 5px;
+    padding-bottom: 8px;
 }
 #creatureInfoPanel p {
-    margin: 5px 0;
+    margin: 8px 0; /* Increased margin for paragraphs */
     color: #e0e0e0;
     display: flex;
     justify-content: space-between;
@@ -329,11 +328,11 @@ canvas.simulator {
     background-color: #CF6679;
     color: white;
     width: 100%;
-    padding: 10px;
+    padding: 12px; /* Increased padding */
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 25px; /* Increased margin top */
     transition: background-color 0.2s ease;
 }
 #closeInfoPanelButton:hover {
@@ -342,16 +341,16 @@ canvas.simulator {
 
 /* Mini-map */
 .mini-map-container {
-    margin-top: 20px;
+    margin-top: 25px; /* Increased margin top */
     background-color: #3a3a5e;
-    padding: 15px;
+    padding: 20px; /* Increased padding */
     border-radius: 8px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
 }
 .mini-map-container h3 {
     color: #03DAC6;
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 15px; /* Increased margin bottom */
     text-align: center;
 }
 #miniMapCanvas {
