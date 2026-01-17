@@ -5,7 +5,7 @@ body {
     min-height: 100vh;
     margin: 0;
     background-color: #1a1a2e; /* Darker background */
-    overflow-y: auto;
+    overflow-y: auto; /* Main page scrolling */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font */
     color: #e0e0e0; /* Light grey text */
     padding: 20px;
@@ -74,8 +74,7 @@ canvas.simulator {
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
-    overflow-y: auto; /* Allow vertical scrolling for long content */
-    max-height: 90vh; /* Limit height to viewport height */
+    /* Removed overflow-y: auto and max-height from .side-panel */
 }
 #controls {
     flex: 0 0 280px; /* Fixed width for controls */
@@ -83,6 +82,8 @@ canvas.simulator {
     display: flex;
     flex-direction: column;
     gap: 20px; /* Increased gap between control groups */
+    overflow-y: auto; /* Keep scrolling for controls if they get too long */
+    max-height: 90vh; /* Keep max-height for controls */
 }
 
 .control-group {
@@ -226,8 +227,7 @@ canvas.simulator {
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
-    overflow-y: auto; /* Allow vertical scrolling for long content */
-    max-height: 90vh; /* Limit height to viewport height */
+    /* Removed overflow-y: auto; and max-height: 90vh; */
     display: flex; /* Make side-panel a flex container */
     flex-direction: column; /* Stack its children vertically */
     gap: 20px; /* Gap between brain displays */
@@ -251,7 +251,7 @@ canvas.simulator {
 
     /* NEW: Resizable properties */
     resize: both; /* Allow resizing in both directions */
-    overflow: auto; /* Essential for resize to work */
+    overflow: auto; /* Essential for resize to work for its own content */
     min-width: 200px; /* Prevent it from becoming too small */
     min-height: 150px; /* Prevent it from becoming too small */
 }
@@ -282,8 +282,8 @@ canvas.simulator {
     display: block;
     flex-grow: 1; /* Allow canvas to grow within its parent */
     /* Ensure the canvas visually occupies the space. */
-    width: 100%; /* Changed from fill-available */
-    height: 100%; /* Changed from fill-available */
+    width: 100%;
+    height: 100%;
 }
 
 /* Charts Area */
@@ -397,8 +397,8 @@ canvas.simulator {
     align-items: center; /* Center content horizontally */
     width: 400px; /* Fixed width for the container */
     height: 300px; /* Fixed height for the container */
-    flex-shrink: 0; /* NEW: Prevent it from shrinking */
-    flex-grow: 0; /* NEW: Prevent it from growing */
+    flex-shrink: 0; /* Prevent it from shrinking */
+    flex-grow: 0; /* Prevent it from growing */
 }
 .mini-map-container h3 {
     color: #03DAC6;
