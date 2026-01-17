@@ -238,7 +238,8 @@ export const UIManager = {
 
         // Calculate dynamic node radius based on the most crowded layer
         const maxNodesInAnyLayer = Math.max(inputNodes, hiddenNodes, outputNodes);
-        let calculatedNodeRadius = (effectiveCanvasHeight / (maxNodesInAnyLayer + 1)) / 2;
+        // Ensure at least 1 node for division to avoid Infinity
+        let calculatedNodeRadius = (effectiveCanvasHeight / (Math.max(1, maxNodesInAnyLayer) + 1)) / 2; 
         calculatedNodeRadius = clamp(calculatedNodeRadius, minNodeRadius, maxNodeRadius);
         const nodeRadius = calculatedNodeRadius;
 
@@ -275,11 +276,11 @@ export const UIManager = {
             ctx.strokeStyle = '#555';
             ctx.stroke();
 
-            // Input Labels - adjusted offset
+            // Input Labels - adjusted offset and increased min font size
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`;
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 10, 16)}px Arial`; // Increased min font size
             ctx.textAlign = 'right';
-            ctx.fillText(inputLabels[i], x - nodeRadius - (nodeRadius * 0.5), y + (nodeRadius * 0.3)); 
+            ctx.fillText(inputLabels[i], x - nodeRadius - (nodeRadius * 0.7), y + (nodeRadius * 0.3)); 
         }
 
         // Draw hidden nodes
@@ -294,9 +295,9 @@ export const UIManager = {
             ctx.strokeStyle = '#555';
             ctx.stroke();
 
-            // Hidden Node Labels (e.g., H1, H2)
+            // Hidden Node Labels (e.g., H1, H2) - adjusted offset and increased min font size
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 12)}px Arial`;
+            ctx.font = `bold ${clamp(nodeRadius * 1.1, 9, 14)}px Arial`; // Increased min font size
             ctx.textAlign = 'center';
             ctx.fillText(`H${i + 1}`, x, y + (nodeRadius * 0.3));
 
@@ -305,7 +306,7 @@ export const UIManager = {
             const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x + nodeRadius + (biasIndicatorRadius), y, biasMagnitudeH, 0, Math.PI * 2); 
+            ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); // Increased offset
             ctx.fillStyle = biasColorH;
             ctx.fill();
         }
@@ -322,18 +323,18 @@ export const UIManager = {
             ctx.strokeStyle = '#555';
             ctx.stroke();
 
-            // Output Labels - adjusted offset
+            // Output Labels - adjusted offset and increased min font size
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`;
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 10, 16)}px Arial`; // Increased min font size
             ctx.textAlign = 'left';
-            ctx.fillText(outputLabels[i], x + nodeRadius + (nodeRadius * 0.5), y + (nodeRadius * 0.3)); 
+            ctx.fillText(outputLabels[i], x + nodeRadius + (nodeRadius * 0.7), y + (nodeRadius * 0.3)); // Increased offset
 
             // Bias Indicator for Output Nodes - adjusted offset
             const biasO = brain.bias_o[i];
             const biasColorO = biasO > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeO = clamp(Math.abs(biasO) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x - nodeRadius - (biasIndicatorRadius), y, biasMagnitudeO, 0, Math.PI * 2); 
+            ctx.arc(x - nodeRadius - (nodeRadius * 0.5), y, biasMagnitudeO, 0, Math.PI * 2); // Increased offset
             ctx.fillStyle = biasColorO;
             ctx.fill();
         }
@@ -445,6 +446,8 @@ export const UIManager = {
         document.getElementById('infoCreatureClutchSize').textContent = creature.clutchSize;
         document.getElementById('infoCreatureSensoryRange').textContent = Math.round(creature.sensoryRange);
         document.getElementById('infoCreatureOptimalTemp').textContent = creature.optimalTemperature.toFixed(2);
+        // NEW: Display Armor
+        document.getElementById('infoCreatureArmor').textContent = creature.armor.toFixed(1);
 
 
         this.creatureInfoPanel.classList.remove('hidden');
