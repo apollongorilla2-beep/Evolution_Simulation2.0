@@ -70,7 +70,7 @@ export const UIManager = {
      * @param {number} progress - The progress percentage (0-100).
      */
     updateGenerationProgress(progress) {
-        this.generationProgressSpan.textContent = `\${progress}%`;
+        this.generationProgressSpan.textContent = `${progress}%`;
     },
 
     /**
@@ -141,3 +141,91 @@ export const UIManager = {
         for (let i = 0; i < hiddenNodes; i++) {
             const x = horizontalSpacing * 2;
             const y = (i + 1) * hiddenYStep;
+            nodes.hidden.push({ x, y });
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#03DAC6'; /* Teal for hidden nodes */
+            ctx.fill();
+            ctx.strokeStyle = '#555';
+            ctx.stroke();
+        }
+
+        // Draw output nodes
+        for (let i = 0; i < outputNodes; i++) {
+            const x = horizontalSpacing * 3;
+            const y = (i + 1) * outputYStep;
+            nodes.output.push({ x, y });
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFC107'; /* Orange for output nodes */
+            ctx.fill();
+            ctx.strokeStyle = '#555';
+            ctx.stroke();
+            ctx.fillStyle = '#e0e0e0';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(outputLabels[i], x + nodeRadius + 5, y + 3);
+        }
+
+        // Draw connections (weights) from input to hidden layer
+        for (let i = 0; i < inputNodes; i++) {
+            for (let j = 0; j < hiddenNodes; j++) {
+                const weight = brain.weights_ih[i][j];
+                ctx.beginPath();
+                ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
+                ctx.lineTo(nodes.hidden[j].x, nodes.hidden[j].y);
+                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight / 2), 0, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight / 2), 0, 1)})`;
+                ctx.lineWidth = Math.abs(weight) * 1.5;
+                ctx.stroke();
+            }
+        }
+
+        // Draw connections (weights) from hidden to output layer
+        for (let i = 0; i < hiddenNodes; i++) {
+            for (let j = 0; j < outputNodes; j++) {
+                const weight = brain.weights_ho[i][j];
+                ctx.beginPath();
+                ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
+                ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
+                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight / 2), 0, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight / 2), 0, 1)})`;
+                ctx.lineWidth = Math.abs(weight) * 1.5;
+                ctx.stroke();
+            }
+        }
+    },
+
+    /**
+     * Updates the displayed neural networks for the top 3 creatures.
+     * @param {Creature[]} creatures - Array of all creatures in the current generation.
+     */
+    updateBrainDisplays(creatures) {
+        // Sort creatures by current food eaten count for display
+        const sortedCreaturesForDisplay = [...creatures].sort((a, b) => b.foodEatenCount - a.foodEatenCount);
+
+        // Updated input labels to reflect new NN inputs
+        const inputLabels = ["F Angle", "F Dist", "Energy", "Wall X", "Wall Y", "Biome", "Vision", "Crt Angle", "Crt Dist", "Biome Pref", "Lifespan"];
+        const outputLabels = ["Turn Rate", "Speed Adj"];
+
+        for (let i = 0; i < 3; i++) {
+            const display = this.brainDisplays[i];
+            const creature = sortedCreaturesForDisplay[i];
+
+            if (creature) {
+                const colorBox = display.title.querySelector('.color-box');
+                colorBox.style.backgroundColor = creature.originalColor; // Show original color
+                display.title.innerHTML = `Creature ${i + 1} <span class="color-box" style="background-color: ${creature.originalColor};"></span>`;
+
+                this.drawNeuralNetwork(this.brainContexts[i], creature.brain, inputLabels, outputLabels);
+            } else {
+                const colorBox = display.title.querySelector('.color-box');
+                colorBox.style.backgroundColor = 'gray';
+                display.title.innerHTML = `Creature ${i + 1} <span class="color-box" style="background-color: gray;"></span>`;
+                if (this.brainContexts[i]) {
+                    this.brainContexts[i].clearRect(0, 0, display.canvas.width, display.canvas.height);
+                    this.brainContexts[i].fillStyle = '#2a2a4a';
+                    this.brainContexts[i].fillRect(0, 0, display.canvas.width, display.canvas.height);
+                }
+            }
+        }
+    }
+};
