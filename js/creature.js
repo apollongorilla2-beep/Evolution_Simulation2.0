@@ -31,29 +31,29 @@ export class Creature {
         this.y = options.y;
         this.originalColor = options.color || '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         this.color = this.originalColor;
-        this.speed = options.speed || SIM_CONFIG.BASE_SPEED;
-        this.size = options.size || SIM_CONFIG.CREATURE_BASE_RADIUS;
+        this.speed = options.speed;
+        this.size = options.size;
         this.energy = 100;
         this.age = 0;
         this.direction = Math.random() * Math.PI * 2;
         this.foodEatenCount = 0;
         this.isAlive = true;
         this.fitness = 0; // Stored fitness from previous generation for selection and adaptive mutation
-        this.visionRange = options.visionRange || SIM_CONFIG.INITIAL_VISION_RANGE;
+        this.visionRange = options.visionRange;
         this.wallHits = 0; // Track wall hits for fitness penalty
-        this.lifespan = options.lifespan || SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60; // Creature's individual lifespan in frames
-        this.biomePreference = options.biomePreference || 0; // Creature's preferred biome type index
+        this.lifespan = options.lifespan; // Creature's individual lifespan in frames
+        this.biomePreference = options.biomePreference; // Creature's preferred biome type index
 
         // New Genetic Traits
-        this.dietType = options.dietType !== undefined ? options.dietType : SIM_CONFIG.INITIAL_DIET_TYPE; // 0=Herbivore, 1=Carnivore
-        this.attackPower = options.attackPower || SIM_CONFIG.INITIAL_ATTACK_POWER;
-        this.defense = options.defense || SIM_CONFIG.INITIAL_DEFENSE;
-        this.metabolismRate = options.metabolismRate || SIM_CONFIG.INITIAL_METABOLISM_RATE;
-        this.reproductionCooldown = options.reproductionCooldown || SIM_CONFIG.INITIAL_REPRODUCTION_COOLDOWN;
+        this.dietType = options.dietType; // 0=Herbivore, 1=Carnivore
+        this.attackPower = options.attackPower;
+        this.defense = options.defense;
+        this.metabolismRate = options.metabolismRate;
+        this.reproductionCooldown = options.reproductionCooldown;
         this.currentReproductionCooldown = 0; // Tracks frames until next reproduction is possible
-        this.clutchSize = options.clutchSize || SIM_CONFIG.INITIAL_CLUTCH_SIZE;
-        this.sensoryRange = options.sensoryRange || SIM_CONFIG.INITIAL_SENSORY_RANGE; // For scent/hearing
-        this.optimalTemperature = options.optimalTemperature || SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE; // Normalized 0-1
+        this.clutchSize = options.clutchSize;
+        this.sensoryRange = options.sensoryRange; // For scent/hearing
+        this.optimalTemperature = options.optimalTemperature; // Normalized 0-1
 
         this.brain = options.brain || new NeuralNetwork(
             SIM_CONFIG.BRAIN_INPUT_NODES,
@@ -190,10 +190,10 @@ export class Creature {
             nearestCreatureAngleInput, nearestCreatureDistanceInput,
             biomePreferenceInput,
             lifespanInput,
-            dietTypeInput, // New
-            sensoryRangeInput, // New
-            currentTemperatureInput, // New
-            hazardProximityInput // New
+            dietTypeInput,
+            sensoryRangeInput,
+            currentTemperatureInput,
+            hazardProximityInput
         ];
 
         const outputs = this.brain.feedForward(inputs);
@@ -445,24 +445,24 @@ export class Creature {
         baseFitness -= speedDifference * 10; // Penalty for deviating too much from base speed
 
         // Reward for efficient vision range
-        baseFitness -= Math.abs(this.visionRange - SIM_CONFIG.INITIAL_VISION_RANGE) * 0.5; // Small penalty for deviating from initial vision
+        baseFitness -= Math.abs(this.visionRange - SIM_CONFIG.DEFAULT_INITIAL_VISION_RANGE) * 0.5; // Small penalty for deviating from initial vision
 
         // Penalty for frequent wall collisions
         baseFitness -= this.wallHits * SIM_CONFIG.WALL_COLLISION_FITNESS_PENALTY;
 
         // Reward for optimal lifespan (not too short, not too long relative to initial)
-        const lifespanDifference = Math.abs(this.lifespan - (SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60));
+        const lifespanDifference = Math.abs(this.lifespan - SIM_CONFIG.DEFAULT_INITIAL_LIFESPAN_FRAMES);
         baseFitness -= lifespanDifference * 0.1;
 
-        // New: Reward for optimal metabolism (closer to initial base is better, or a range)
-        const metabolismDifference = Math.abs(this.metabolismRate - SIM_CONFIG.INITIAL_METABOLISM_RATE);
-        baseFitness -= metabolismDifference * 1000; // Penalize deviation from initial metabolism
+        // New: Reward for optimal metabolism (closer to default base is better)
+        const metabolismDifference = Math.abs(this.metabolismRate - SIM_CONFIG.DEFAULT_INITIAL_METABOLISM_RATE);
+        baseFitness -= metabolismDifference * 1000; // Penalize deviation from default metabolism
 
-        // New: Reward for optimal reproduction cooldown (not too long, not too short)
-        const reproCooldownDifference = Math.abs(this.reproductionCooldown - SIM_CONFIG.INITIAL_REPRODUCTION_COOLDOWN);
+        // New: Reward for optimal reproduction cooldown (not too long, not too short relative to default)
+        const reproCooldownDifference = Math.abs(this.reproductionCooldown - SIM_CONFIG.DEFAULT_INITIAL_REPRODUCTION_COOLDOWN_FRAMES);
         baseFitness -= reproCooldownDifference * 0.5;
 
-        // New: Reward for attack/defense balance (complex, but simple for now: penalize very low values)
+        // New: Reward for attack/defense balance (complex, but simple for now: penalize very low values, reward higher values)
         baseFitness += this.attackPower * 2;
         baseFitness += this.defense * 2;
         if (this.attackPower < 5) baseFitness -= 50;
@@ -470,7 +470,12 @@ export class Creature {
 
         // New: Reward for sensory range (up to a point)
         baseFitness += this.sensoryRange * 0.5;
-        if (this.sensoryRange > SIM_CONFIG.INITIAL_SENSORY_RANGE * 2) baseFitness -= 20; // Penalize excessive sensory range
+        if (this.sensoryRange > SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE * 2 && SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE !== 0) baseFitness -= 20; // Penalize excessive sensory range if there was an initial baseline
+        else if (this.sensoryRange > 50 && SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE === 0) baseFitness -= (this.sensoryRange - 50) * 0.5; // If starting at 0, penalize very high values
+
+        // New: Reward for optimal temperature (closer to default is better)
+        const optimalTempDifference = Math.abs(this.optimalTemperature - SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE);
+        baseFitness -= optimalTempDifference * 100; // Penalize deviation from default optimal temp
 
         return Math.max(0, baseFitness); // Fitness cannot be negative
     }
@@ -524,7 +529,7 @@ export class Creature {
      */
     mutateLifespan(parentLifespan, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentLifespan + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.LIFESPAN_MUTATION_STRENGTH * 60, // Multiply by 60 for seconds to frames
+            return clamp(parentLifespan + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.LIFESPAN_MUTATION_STRENGTH_MULTIPLIER * 60, // Multiply by 60 for seconds to frames
                 10 * 60, // Minimum 10 seconds lifespan
                 150 * 60 // Maximum 150 seconds lifespan
             );
@@ -542,7 +547,7 @@ export class Creature {
     mutateBiomePreference(parentBiomePreference, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
             const numBiomeTypes = BIOME_TYPES.length;
-            let newPreference = parentBiomePreference + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.BIOME_PREFERENCE_MUTATION_STRENGTH * numBiomeTypes);
+            let newPreference = parentBiomePreference + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.BIOME_PREFERENCE_MUTATION_STRENGTH_MULTIPLIER * numBiomeTypes);
             return clamp(newPreference, 0, numBiomeTypes - 1);
         }
         return parentBiomePreference;
@@ -555,7 +560,7 @@ export class Creature {
      * @returns {number} The new mutated diet type.
      */
     mutateDietType(parentDietType, mutationRate) {
-        if (Math.random() < mutationRate * SIM_CONFIG.DIET_TYPE_MUTATION_STRENGTH) {
+        if (Math.random() < mutationRate * SIM_CONFIG.DIET_TYPE_MUTATION_CHANCE_MULTIPLIER) {
             return parentDietType === 0 ? 1 : 0; // Flip between herbivore (0) and carnivore (1)
         }
         return parentDietType;
@@ -570,7 +575,7 @@ export class Creature {
      */
     mutateAttackPower(parentAttackPower, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentAttackPower + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.ATTACK_POWER_MUTATION_STRENGTH * 10,
+            return clamp(parentAttackPower + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.ATTACK_POWER_MUTATION_STRENGTH_MULTIPLIER * 10,
                 1, 50);
         }
         return parentAttackPower;
@@ -585,7 +590,7 @@ export class Creature {
      */
     mutateDefense(parentDefense, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentDefense + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.DEFENSE_MUTATION_STRENGTH * 10,
+            return clamp(parentDefense + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.DEFENSE_MUTATION_STRENGTH_MULTIPLIER * 10,
                 0, 30);
         }
         return parentDefense;
@@ -600,7 +605,7 @@ export class Creature {
      */
     mutateMetabolismRate(parentMetabolismRate, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentMetabolismRate + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.METABOLISM_MUTATION_STRENGTH,
+            return clamp(parentMetabolismRate + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.METABOLISM_MUTATION_STRENGTH_MULTIPLIER,
                 0.01, 0.1);
         }
         return parentMetabolismRate;
@@ -615,7 +620,7 @@ export class Creature {
      */
     mutateReproductionCooldown(parentReproductionCooldown, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentReproductionCooldown + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.REPRODUCTION_COOLDOWN_MUTATION_STRENGTH,
+            return clamp(parentReproductionCooldown + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.REPRODUCTION_COOLDOWN_MUTATION_STRENGTH_MULTIPLIER,
                 30, 300);
         }
         return parentReproductionCooldown;
@@ -630,7 +635,7 @@ export class Creature {
      */
     mutateClutchSize(parentClutchSize, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentClutchSize + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH),
+            return clamp(parentClutchSize + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH_MULTIPLIER),
                 1, 5);
         }
         return parentClutchSize;
@@ -645,7 +650,7 @@ export class Creature {
      */
     mutateSensoryRange(parentSensoryRange, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentSensoryRange + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.SENSORY_RANGE_MUTATION_STRENGTH,
+            return clamp(parentSensoryRange + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.SENSORY_RANGE_MUTATION_STRENGTH_MULTIPLIER * 10,
                 0, 150);
         }
         return parentSensoryRange;
@@ -660,7 +665,7 @@ export class Creature {
      */
     mutateOptimalTemperature(parentOptimalTemperature, mutationRate, mutationStrength) {
         if (Math.random() < mutationRate) {
-            return clamp(parentOptimalTemperature + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.OPTIMAL_TEMPERATURE_MUTATION_STRENGTH,
+            return clamp(parentOptimalTemperature + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.OPTIMAL_TEMPERATURE_MUTATION_STRENGTH_MULTIPLIER,
                 0, 1);
         }
         return parentOptimalTemperature;
