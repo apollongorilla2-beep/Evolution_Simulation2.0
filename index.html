@@ -33,7 +33,7 @@
                     </div>
                     <div class="slider-group">
                         <label for="mutationRateSlider">Mutation Rate: <span id="mutationRateValue">0.15</span></label>
-                        <input type="range" id="mutationRateSlider" min="0.01" max="0.5" value="0.15" step="0.01">
+                        <input type="range" id="mutationRateSlider" min="0.01" max="0.5" value="0.15" step="0="0.01">
                     </div>
                     <div class="slider-group">
                         <label for="mutationStrengthSlider">Mutation Strength: <span id="mutationStrengthValue">0.8</span></label>
@@ -90,6 +90,10 @@
                     <div class="slider-group">
                         <label for="initialScentHearingRangeSlider">Initial Sensory Range: <span id="initialScentHearingRangeValue">50</span>px</label>
                         <input type="range" id="initialScentHearingRangeSlider" min="0" max="150" value="50" step="10">
+                    </div>
+                    <div class="slider-group">
+                        <label for="initialArmorSlider">Initial Armor: <span id="initialArmorValue">0</span></label>
+                        <input type="range" id="initialArmorSlider" min="0" max="20" value="0" step="1">
                     </div>
                 </div>
 
@@ -200,6 +204,10 @@
                 <h3>Average Optimal Temperature Over Generations</h3>
                 <canvas id="optimalTemperatureChart"></canvas>
             </div>
+            <div class="chart-container">
+                <h3>Average Armor Over Generations</h3>
+                <canvas id="armorChart"></canvas>
+            </div>
         </div>
 
         <div id="creatureInfoPanel" class="hidden">
@@ -223,6 +231,7 @@
             <p>Clutch Size: <span id="infoCreatureClutchSize"></span></p>
             <p>Sensory Range: <span id="infoCreatureSensoryRange"></span>px</p>
             <p>Optimal Temp: <span id="infoCreatureOptimalTemp"></span></p>
+            <p>Armor: <span id="infoCreatureArmor"></span></p>
             <button id="closeInfoPanelButton">Close</button>
         </div>
     </main>
