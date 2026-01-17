@@ -222,15 +222,14 @@ export const UIManager = {
         ctx.fillStyle = '#2a2a4a'; // Matches simulation canvas background
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // Dynamic sizing parameters
-        const minNodeRadius = 4;
-        const maxNodeRadius = 12;
-        const paddingRatio = 0.15; // 15% padding on all sides relative to canvas size
+        // Fixed padding for more predictable layout
+        const paddingX = 20; // 20px padding on left/right
+        const paddingY = 20; // 20px padding on top/bottom
 
-        const effectiveCanvasWidth = canvasWidth * (1 - 2 * paddingRatio);
-        const effectiveCanvasHeight = canvasHeight * (1 - 2 * paddingRatio);
-        const startX = canvasWidth * paddingRatio;
-        const startY = canvasHeight * paddingRatio;
+        const effectiveCanvasWidth = canvasWidth - (2 * paddingX);
+        const effectiveCanvasHeight = canvasHeight - (2 * paddingY);
+        const startX = paddingX;
+        const startY = paddingY;
 
         const inputNodes = brain.inputNodes;
         const hiddenNodes = brain.hiddenNodes;
@@ -238,8 +237,11 @@ export const UIManager = {
 
         // Calculate dynamic node radius based on the most crowded layer
         const maxNodesInAnyLayer = Math.max(inputNodes, hiddenNodes, outputNodes);
-        // Ensure at least 1 node for division to avoid Infinity
-        let calculatedNodeRadius = (effectiveCanvasHeight / (Math.max(1, maxNodesInAnyLayer) + 1)) / 2; 
+        // Ensure at least 1 node for division to avoid Infinity, and give some extra space for labels
+        // Increased divisor for more vertical spacing
+        let calculatedNodeRadius = (effectiveCanvasHeight / (Math.max(1, maxNodesInAnyLayer) + 3)) / 2; 
+        const minNodeRadius = 4;
+        const maxNodeRadius = 12;
         calculatedNodeRadius = clamp(calculatedNodeRadius, minNodeRadius, maxNodeRadius);
         const nodeRadius = calculatedNodeRadius;
 
@@ -252,16 +254,18 @@ export const UIManager = {
 
         // Helper to calculate Y position for a layer, ensuring nodes are fully within bounds
         const calculateYPosition = (index, numNodesInLayer) => {
-            // Define the actual drawable area for node centers, accounting for nodeRadius at top/bottom
-            const topBoundary = startY + nodeRadius;
-            const bottomBoundary = startY + effectiveCanvasHeight - nodeRadius;
-            const usableHeight = bottomBoundary - topBoundary;
-
-            if (numNodesInLayer <= 1) {
-                return startY + effectiveCanvasHeight / 2; // Center if 0 or 1 node
+            if (numNodesInLayer === 0) {
+                return startY + effectiveCanvasHeight / 2; // Center if no nodes
             }
-            // Distribute nodes evenly within the usable height
-            return topBoundary + (index / (numNodesInLayer - 1)) * usableHeight;
+            if (numNodesInLayer === 1) {
+                return startY + effectiveCanvasHeight / 2; // Center single node
+            }
+            // Distribute nodes evenly within the effective height, accounting for node radius
+            const topMostY = startY + nodeRadius;
+            const bottomMostY = startY + effectiveCanvasHeight - nodeRadius;
+            const usableDrawingHeight = bottomMostY - topMostY;
+            
+            return topMostY + (index / (numNodesInLayer - 1)) * usableDrawingHeight;
         };
 
         // Draw input nodes
@@ -278,9 +282,9 @@ export const UIManager = {
 
             // Input Labels - adjusted offset and increased min font size
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.2, 10, 16)}px Arial`; // Increased min font size
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 16)}px Arial`; // Increased min font size, slightly smaller max
             ctx.textAlign = 'right';
-            ctx.fillText(inputLabels[i], x - nodeRadius - (nodeRadius * 0.7), y + (nodeRadius * 0.3)); 
+            ctx.fillText(inputLabels[i], x - nodeRadius - 5, y + (nodeRadius * 0.3)); 
         }
 
         // Draw hidden nodes
@@ -297,7 +301,7 @@ export const UIManager = {
 
             // Hidden Node Labels (e.g., H1, H2) - adjusted offset and increased min font size
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.1, 9, 14)}px Arial`; // Increased min font size
+            ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 14)}px Arial`; // Increased min font size, slightly smaller max
             ctx.textAlign = 'center';
             ctx.fillText(`H${i + 1}`, x, y + (nodeRadius * 0.3));
 
@@ -306,7 +310,7 @@ export const UIManager = {
             const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); // Increased offset
+            ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); 
             ctx.fillStyle = biasColorH;
             ctx.fill();
         }
@@ -325,16 +329,16 @@ export const UIManager = {
 
             // Output Labels - adjusted offset and increased min font size
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.2, 10, 16)}px Arial`; // Increased min font size
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 16)}px Arial`; // Increased min font size, slightly smaller max
             ctx.textAlign = 'left';
-            ctx.fillText(outputLabels[i], x + nodeRadius + (nodeRadius * 0.7), y + (nodeRadius * 0.3)); // Increased offset
+            ctx.fillText(outputLabels[i], x + nodeRadius + 5, y + (nodeRadius * 0.3)); 
 
             // Bias Indicator for Output Nodes - adjusted offset
             const biasO = brain.bias_o[i];
             const biasColorO = biasO > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeO = clamp(Math.abs(biasO) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x - nodeRadius - (nodeRadius * 0.5), y, biasMagnitudeO, 0, Math.PI * 2); // Increased offset
+            ctx.arc(x - nodeRadius - 5, y, biasMagnitudeO, 0, Math.PI * 2); 
             ctx.fillStyle = biasColorO;
             ctx.fill();
         }
