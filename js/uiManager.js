@@ -126,7 +126,6 @@ export const UIManager = {
                 const canvas = display.canvas;
                 canvas.width = display.container.clientWidth;
                 canvas.height = display.container.clientHeight;
-
             });
         } else {
             console.warn("ResizeObserver is not supported by this browser. Neural network canvases will not dynamically resize.");
@@ -215,34 +214,52 @@ export const UIManager = {
      * @param {string[]} outputLabels - Labels for output nodes.
      */
     drawNeuralNetwork(ctx, brain, inputLabels, outputLabels) {
-        if (!ctx || !brain) return; // Added check for brain
+        if (!ctx || !brain) return;
 
-        // Canvas dimensions (attributes) are now guaranteed to match clientWidth/clientHeight
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         ctx.fillStyle = '#2a2a4a'; // Matches simulation canvas background
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        const nodeRadius = 8; // Slightly larger nodes
-        const biasIndicatorRadius = 3; // Small radius for bias indicator
-        const horizontalSpacing = canvasWidth / (brain.inputNodes > 0 && brain.outputNodes > 0 ? 4 : 3); // More dynamic spacing
+        // Dynamic sizing parameters
+        const minNodeRadius = 4;
+        const maxNodeRadius = 12;
+        const paddingRatio = 0.15; // 15% padding on all sides relative to canvas size
+
+        const effectiveCanvasWidth = canvasWidth * (1 - 2 * paddingRatio);
+        const effectiveCanvasHeight = canvasHeight * (1 - 2 * paddingRatio);
+        const startX = canvasWidth * paddingRatio;
+        const startY = canvasHeight * paddingRatio;
 
         const inputNodes = brain.inputNodes;
         const hiddenNodes = brain.hiddenNodes;
         const outputNodes = brain.outputNodes;
 
-        // Adjust vertical spacing based on actual canvas height and number of nodes
-        const inputYStep = canvasHeight / (inputNodes + 1); // +1 for top/bottom margin
-        const hiddenYStep = canvasHeight / (hiddenNodes + 1);
-        const outputYStep = canvasHeight / (outputNodes + 1);
+        // Calculate dynamic node radius based on the most crowded layer
+        const maxNodesInAnyLayer = Math.max(inputNodes, hiddenNodes, outputNodes);
+        let calculatedNodeRadius = (effectiveCanvasHeight / (maxNodesInAnyLayer + 1)) / 2;
+        calculatedNodeRadius = clamp(calculatedNodeRadius, minNodeRadius, maxNodeRadius);
+        const nodeRadius = calculatedNodeRadius;
+
+        const biasIndicatorRadius = clamp(nodeRadius / 2.5, 1.5, 4);
+
+        // Dynamic horizontal spacing based on effective width
+        const horizontalSpacing = effectiveCanvasWidth / (brain.inputNodes > 0 && brain.outputNodes > 0 ? 3 : 2);
 
         const nodes = { input: [], hidden: [], output: [] };
 
+        // Helper to calculate Y position for a layer
+        const calculateYPosition = (index, numNodesInLayer) => {
+            if (numNodesInLayer === 0) return startY + effectiveCanvasHeight / 2; // Center if no nodes
+            if (numNodesInLayer === 1) return startY + effectiveCanvasHeight / 2; // Center single node
+            return startY + (index / (numNodesInLayer - 1)) * effectiveCanvasHeight;
+        };
+
         // Draw input nodes
         for (let i = 0; i < inputNodes; i++) {
-            const x = horizontalSpacing;
-            const y = (i + 0.5) * inputYStep + inputYStep / 2; // Centered
+            const x = startX;
+            const y = calculateYPosition(i, inputNodes);
             nodes.input.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -253,15 +270,15 @@ export const UIManager = {
 
             // Input Labels
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 10px Arial'; // Larger font
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`; // Dynamic font size
             ctx.textAlign = 'right';
-            ctx.fillText(inputLabels[i], x - nodeRadius - 8, y + 3); // Adjusted x for label, more space
+            ctx.fillText(inputLabels[i], x - nodeRadius - (nodeRadius * 0.8), y + (nodeRadius * 0.3));
         }
 
         // Draw hidden nodes
         for (let i = 0; i < hiddenNodes; i++) {
-            const x = horizontalSpacing * 2;
-            const y = (i + 0.5) * hiddenYStep + hiddenYStep / 2; // Centered
+            const x = startX + horizontalSpacing;
+            const y = calculateYPosition(i, hiddenNodes);
             nodes.hidden.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -272,24 +289,24 @@ export const UIManager = {
 
             // Hidden Node Labels (e.g., H1, H2)
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 9px Arial';
+            ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 12)}px Arial`; // Dynamic font size
             ctx.textAlign = 'center';
-            ctx.fillText(`H${i + 1}`, x, y + 3);
+            ctx.fillText(`H${i + 1}`, x, y + (nodeRadius * 0.3));
 
             // Bias Indicator for Hidden Nodes
             const biasH = brain.bias_h[i];
-            const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)'; // Green for positive, Red for negative
-            const biasMagnitudeH = clamp(Math.abs(biasH) * 2, 0.5, 3); // Scale bias indicator size
+            const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
+            const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x + nodeRadius + biasIndicatorRadius * 2, y, biasMagnitudeH, 0, Math.PI * 2);
+            ctx.arc(x + nodeRadius + (biasIndicatorRadius * 1.5), y, biasMagnitudeH, 0, Math.PI * 2);
             ctx.fillStyle = biasColorH;
             ctx.fill();
         }
 
         // Draw output nodes
         for (let i = 0; i < outputNodes; i++) {
-            const x = horizontalSpacing * 3;
-            const y = (i + 0.5) * outputYStep + outputYStep / 2; // Centered
+            const x = startX + horizontalSpacing * 2;
+            const y = calculateYPosition(i, outputNodes);
             nodes.output.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -300,16 +317,16 @@ export const UIManager = {
 
             // Output Labels
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 10px Arial'; // Larger font
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`; // Dynamic font size
             ctx.textAlign = 'left';
-            ctx.fillText(outputLabels[i], x + nodeRadius + 8, y + 3); // Adjusted x for label, more space
+            ctx.fillText(outputLabels[i], x + nodeRadius + (nodeRadius * 0.8), y + (nodeRadius * 0.3));
 
             // Bias Indicator for Output Nodes
             const biasO = brain.bias_o[i];
             const biasColorO = biasO > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
-            const biasMagnitudeO = clamp(Math.abs(biasO) * 2, 0.5, 3);
+            const biasMagnitudeO = clamp(Math.abs(biasO) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x - nodeRadius - biasIndicatorRadius * 2, y, biasMagnitudeO, 0, Math.PI * 2);
+            ctx.arc(x - nodeRadius - (biasIndicatorRadius * 1.5), y, biasMagnitudeO, 0, Math.PI * 2);
             ctx.fillStyle = biasColorO;
             ctx.fill();
         }
@@ -321,9 +338,8 @@ export const UIManager = {
                 ctx.beginPath();
                 ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
                 ctx.lineTo(nodes.hidden[j].x, nodes.hidden[j].y);
-                // More distinct colors and thicker lines
                 ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
-                ctx.lineWidth = clamp(Math.abs(weight) * 2, 0.8, 4); // Max line width 4px
+                ctx.lineWidth = clamp(Math.abs(weight) * (nodeRadius / 3), 0.8, 4); // Scale line width with node radius
                 ctx.stroke();
             }
         }
@@ -335,9 +351,8 @@ export const UIManager = {
                 ctx.beginPath();
                 ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
                 ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
-                // More distinct colors and thicker lines
                 ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
-                ctx.lineWidth = clamp(Math.abs(weight) * 2, 0.8, 4); // Max line width 4px
+                ctx.lineWidth = clamp(Math.abs(weight) * (nodeRadius / 3), 0.8, 4); // Scale line width with node radius
                 ctx.stroke();
             }
         }
