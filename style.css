@@ -230,7 +230,7 @@ canvas.simulator {
     flex-direction: column; /* Stack its children vertically */
     gap: 20px; /* Gap between brain displays */
     
-    /* Re-added constraints for the side-panel itself */
+    /* Constraints for the side-panel itself */
     max-height: 90vh; /* Limits the overall height of the side panel */
     overflow-y: auto; /* Provides a scrollbar for the side panel if its content overflows */
 }
@@ -248,7 +248,7 @@ canvas.simulator {
     text-align: center;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
     
-    /* NEW: Set a default height to prevent stretching */
+    /* Set a default height to prevent stretching, overridden by manual resize */
     height: 250px; /* Adjust this value as needed for a good default visual size */
     
     display: flex; /* Make it a flex container for its children */
@@ -285,8 +285,8 @@ canvas.simulator {
     margin-top: 0; /* Reset margin-top */
     border-radius: 4px;
     display: block;
-    flex-grow: 1; /* Allow canvas to grow within its parent */
-    /* Ensure the canvas visually occupies the space. */
+    /* REMOVED: flex-grow: 1; */ 
+    /* The canvas should not automatically grow; its size is managed by JS and parent's explicit height/resize. */
     width: 100%;
     height: 100%;
 }
