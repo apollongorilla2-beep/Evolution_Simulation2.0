@@ -12,8 +12,10 @@ export class Creature {
      * @param {number} [size=SIM_CONFIG.CREATURE_BASE_RADIUS] - Creature's size (radius).
      * @param {NeuralNetwork} [brain=null] - Creature's neural network. If null, a new one is created.
      * @param {number} [visionRange=SIM_CONFIG.INITIAL_VISION_RANGE] - Creature's vision range.
+     * @param {number} [lifespan=SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60] - Creature's maximum age in frames.
+     * @param {number} [biomePreference=0] - Creature's preferred biome type index.
      */
-    constructor(x, y, color = null, speed = SIM_CONFIG.BASE_SPEED, size = SIM_CONFIG.CREATURE_BASE_RADIUS, brain = null, visionRange = SIM_CONFIG.INITIAL_VISION_RANGE) {
+    constructor(x, y, color = null, speed = SIM_CONFIG.BASE_SPEED, size = SIM_CONFIG.CREATURE_BASE_RADIUS, brain = null, visionRange = SIM_CONFIG.INITIAL_VISION_RANGE, lifespan = SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60, biomePreference = 0) {
         this.x = x;
         this.y = y;
         this.originalColor = color || '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
@@ -28,6 +30,8 @@ export class Creature {
         this.fitness = 0; // Stored fitness from previous generation for selection and adaptive mutation
         this.visionRange = visionRange;
         this.wallHits = 0; // Track wall hits for fitness penalty
+        this.lifespan = lifespan; // New: Creature's individual lifespan
+        this.biomePreference = biomePreference; // New: Creature's preferred biome type index
 
         this.brain = brain || new NeuralNetwork(
             SIM_CONFIG.BRAIN_INPUT_NODES,
@@ -54,10 +58,11 @@ export class Creature {
     /**
      * The creature's "thinking" process using its neural network.
      * @param {Food[]} globalFood - Array of all food items.
+     * @param {Creature[]} globalCreatures - Array of all other creatures.
      * @param {number[][]} biomeMap - The global biome map.
      * @returns {{turnRate: number, speedAdjustment: number}} The actions determined by the brain.
      */
-    think(globalFood, biomeMap) {
+    think(globalFood, globalCreatures, biomeMap) {
         // Gather inputs (normalized 0-1)
         let foodAngleInput = 0.5; // Neutral if no food
         let foodDistanceInput = 0; // Farthest if no food (0 implies no food, 1 implies very close)
@@ -82,6 +87,30 @@ export class Creature {
             foodDistanceInput = 1 - (minFoodDistance / this.visionRange);
         }
 
+        // New: Nearest other creature inputs
+        let nearestCreatureAngleInput = 0.5; // Neutral if no other creature
+        let nearestCreatureDistanceInput = 0; // Farthest if no other creature
+        let closestOtherCreature = null;
+        let minCreatureDistance = Infinity;
+
+        for (const otherCreature of globalCreatures) {
+            if (otherCreature !== this && otherCreature.isAlive) { // Don't consider self or dead creatures
+                const dist = Math.sqrt((this.x - otherCreature.x) ** 2 + (this.y - otherCreature.y) ** 2);
+                if (dist < minCreatureDistance && dist <= this.visionRange) {
+                    minCreatureDistance = dist;
+                    closestOtherCreature = otherCreature;
+                }
+            }
+        }
+
+        if (closestOtherCreature) {
+            const angleToCreature = Math.atan2(closestOtherCreature.y - this.y, closestOtherCreature.x - this.x);
+            let relativeAngle = normalizeAngle(angleToCreature - this.direction);
+            nearestCreatureAngleInput = relativeAngle / (2 * Math.PI);
+            nearestCreatureDistanceInput = 1 - (minCreatureDistance / this.visionRange);
+        }
+
+
         // Creature energy (normalized)
         let energyInput = clamp(this.energy / (SIM_CONFIG.REPRODUCTION_THRESHOLD * 2), 0, 1);
 
@@ -104,7 +133,21 @@ export class Creature {
         // Vision Range input (normalized)
         let visionRangeInput = clamp(this.visionRange / 300, 0, 1); // Max vision range is 300 from slider
 
-        const inputs = [foodAngleInput, foodDistanceInput, energyInput, wallXDistanceInput, wallYDistanceInput, biomeInput, visionRangeInput];
+        // New: Biome Preference input (normalized)
+        const biomePreferenceInput = this.biomePreference / (BIOME_TYPES.length - 1);
+
+        // New: Lifespan input (normalized)
+        const lifespanInput = clamp(this.lifespan / (SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60 * 2), 0, 1); // Normalize against double max initial lifespan
+
+
+        const inputs = [
+            foodAngleInput, foodDistanceInput, energyInput,
+            wallXDistanceInput, wallYDistanceInput, biomeInput,
+            visionRangeInput,
+            nearestCreatureAngleInput, nearestCreatureDistanceInput, // New creature sensing inputs
+            biomePreferenceInput, // New biome preference input
+            lifespanInput // New lifespan input
+        ];
 
         const outputs = this.brain.feedForward(inputs);
 
@@ -169,16 +212,17 @@ export class Creature {
      * Updates the creature's state each frame.
      * @param {number[][]} biomeMap - The global biome map.
      * @param {Food[]} globalFood - Array of all food items.
+     * @param {Creature[]} globalCreatures - Array of all other creatures.
      * @param {number} mutationRate - Current mutation rate.
      * @param {number} mutationStrength - Current mutation strength.
      */
-    update(biomeMap, globalFood, mutationRate, mutationStrength) {
+    update(biomeMap, globalFood, globalCreatures, mutationRate, mutationStrength) {
         this.age++;
 
         const currentBiome = this.getBiome(biomeMap);
         this.energy -= SIM_CONFIG.ENERGY_DECAY_BASE * currentBiome.movement_cost_multiplier;
 
-        const { turnRate, speedAdjustment } = this.think(globalFood, biomeMap);
+        const { turnRate, speedAdjustment } = this.think(globalFood, globalCreatures, biomeMap); // Pass globalCreatures
         this.direction = normalizeAngle(this.direction + turnRate);
         this.speed = clamp(SIM_CONFIG.BASE_SPEED + speedAdjustment, 0.5, SIM_CONFIG.BASE_SPEED * 2.5);
 
@@ -215,8 +259,8 @@ export class Creature {
             this.trail.shift();
         }
 
-        // Creature becomes "not alive" only when it reaches MAX_AGE_FRAMES or runs out of energy
-        if (this.age > SIM_CONFIG.MAX_AGE_FRAMES || this.energy <= 0) {
+        // Creature becomes "not alive" only when it reaches its individual lifespan or runs out of energy
+        if (this.age > this.lifespan || this.energy <= 0) {
             this.isAlive = false;
         }
     }
@@ -245,11 +289,17 @@ export class Creature {
         let baseFitness = this.foodEatenCount * 200; // Increased food reward
         baseFitness += this.age * 0.8; // Reward for surviving longer
         baseFitness += Math.max(0, this.energy) * 0.2; // Reward for remaining energy (cannot be negative)
-        baseFitness -= (this.age > SIM_CONFIG.MAX_AGE_FRAMES ? 0 : (SIM_CONFIG.MAX_AGE_FRAMES - this.age)) * 0.02; // Small penalty for not reaching max age
+        baseFitness -= (this.age > this.lifespan ? 0 : (this.lifespan - this.age)) * 0.02; // Small penalty for not reaching max age if it died early
 
         // Reward for being in a biome it's adapted to (or penalize for being in a bad one)
         const currentBiome = this.getBiome(biomeMap);
-        baseFitness += currentBiome.base_adaptation_score * 75; // Increased biome adaptation reward
+        baseFitness += currentBiome.base_adaptation_score * 75;
+
+        // New: Reward/penalty based on biome preference
+        const currentBiomeIndex = BIOME_TYPES.findIndex(b => b.type === currentBiome.type);
+        const biomePreferenceDifference = Math.abs(this.biomePreference - currentBiomeIndex);
+        baseFitness -= biomePreferenceDifference * SIM_CONFIG.BIOME_PREFERENCE_FITNESS_MULTIPLIER; // Penalty for being in a non-preferred biome
+
 
         // Reward for optimal speed (not too fast, not too slow)
         const speedDifference = Math.abs(this.speed - SIM_CONFIG.BASE_SPEED);
@@ -258,8 +308,13 @@ export class Creature {
         // Reward for efficient vision range
         baseFitness -= Math.abs(this.visionRange - SIM_CONFIG.INITIAL_VISION_RANGE) * 0.5; // Small penalty for deviating from initial vision
 
-        // New: Penalty for frequent wall collisions
+        // Penalty for frequent wall collisions
         baseFitness -= this.wallHits * SIM_CONFIG.WALL_COLLISION_FITNESS_PENALTY;
+
+        // New: Reward for optimal lifespan (not too short, not too long relative to initial)
+        const lifespanDifference = Math.abs(this.lifespan - (SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60));
+        baseFitness -= lifespanDifference * 0.1;
+
 
         return Math.max(0, baseFitness); // Fitness cannot be negative
     }
@@ -305,6 +360,40 @@ export class Creature {
     }
 
     /**
+     * New: Mutates a creature's lifespan.
+     * @param {number} parentLifespan - The parent's lifespan.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated lifespan.
+     */
+    mutateLifespan(parentLifespan, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentLifespan + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.LIFESPAN_MUTATION_STRENGTH * 60, // Multiply by 60 for seconds to frames
+                10 * 60, // Minimum 10 seconds lifespan
+                150 * 60 // Maximum 150 seconds lifespan
+            );
+        }
+        return parentLifespan;
+    }
+
+    /**
+     * New: Mutates a creature's biome preference.
+     * @param {number} parentBiomePreference - The parent's biome preference.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated biome preference.
+     */
+    mutateBiomePreference(parentBiomePreference, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            const numBiomeTypes = BIOME_TYPES.length;
+            let newPreference = parentBiomePreference + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.BIOME_PREFERENCE_MUTATION_STRENGTH * numBiomeTypes);
+            return clamp(newPreference, 0, numBiomeTypes - 1);
+        }
+        return parentBiomePreference;
+    }
+
+
+    /**
      * Creates a clone of the creature for elitism, resetting mutable state.
      * @returns {Creature} A new Creature instance that is a clone.
      */
@@ -316,7 +405,9 @@ export class Creature {
             this.speed,
             this.size,
             this.brain, // Keep the same brain
-            this.visionRange
+            this.visionRange,
+            this.lifespan, // Carry over lifespan
+            this.biomePreference // Carry over biome preference
         );
         clonedCreature.fitness = this.fitness; // Carry over fitness for potential re-evaluation or reference
         return clonedCreature;
