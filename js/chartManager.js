@@ -9,8 +9,16 @@ export const ChartManager = {
     sizeData: [],
     foodEatenData: [],
     visionRangeData: [],
-    lifespanData: [], // New chart data for lifespan
-    biomePreferenceData: [], // New chart data for biome preference
+    lifespanData: [],
+    biomePreferenceData: [],
+    // New chart data arrays
+    attackPowerData: [],
+    defenseData: [],
+    metabolismData: [],
+    clutchSizeData: [],
+    sensoryRangeData: [],
+    optimalTemperatureData: [],
+
 
     fitnessChart: null,
     populationChart: null,
@@ -18,8 +26,15 @@ export const ChartManager = {
     sizeChart: null,
     foodEatenChart: null,
     visionRangeChart: null,
-    lifespanChart: null, // New chart instance
-    biomePreferenceChart: null, // New chart instance
+    lifespanChart: null,
+    biomePreferenceChart: null,
+    // New chart instances
+    attackPowerChart: null,
+    defenseChart: null,
+    metabolismChart: null,
+    clutchSizeChart: null,
+    sensoryRangeChart: null,
+    optimalTemperatureChart: null,
 
     /**
      * Initializes all Chart.js instances.
@@ -86,6 +101,31 @@ export const ChartManager = {
             type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Biome Preference Index', data: this.biomePreferenceData, borderColor: '#6200EE', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: BIOME_TYPES.length - 1, stepSize: 1 } } }
         });
+        // New chart instances
+        this.attackPowerChart = new Chart(document.getElementById('attackPowerChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Attack Power', data: this.attackPowerData, borderColor: '#FF5722', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
+        });
+        this.defenseChart = new Chart(document.getElementById('defenseChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Defense', data: this.defenseData, borderColor: '#1E88E5', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
+        });
+        this.metabolismChart = new Chart(document.getElementById('metabolismChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Metabolism Rate', data: this.metabolismData, borderColor: '#8BC34A', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 0.1 } } }
+        });
+        this.clutchSizeChart = new Chart(document.getElementById('clutchSizeChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Clutch Size', data: this.clutchSizeData, borderColor: '#9C27B0', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH * 5 } } }
+        });
+        this.sensoryRangeChart = new Chart(document.getElementById('sensoryRangeChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Sensory Range', data: this.sensoryRangeData, borderColor: '#00BCD4', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 150 } } }
+        });
+        this.optimalTemperatureChart = new Chart(document.getElementById('optimalTemperatureChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Optimal Temperature', data: this.optimalTemperatureData, borderColor: '#FFEB3B', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 1 } } }
+        });
     },
 
     /**
@@ -100,6 +140,14 @@ export const ChartManager = {
         if (this.visionRangeChart) this.visionRangeChart.destroy();
         if (this.lifespanChart) this.lifespanChart.destroy();
         if (this.biomePreferenceChart) this.biomePreferenceChart.destroy();
+        // Destroy new chart instances
+        if (this.attackPowerChart) this.attackPowerChart.destroy();
+        if (this.defenseChart) this.defenseChart.destroy();
+        if (this.metabolismChart) this.metabolismChart.destroy();
+        if (this.clutchSizeChart) this.clutchSizeChart.destroy();
+        if (this.sensoryRangeChart) this.sensoryRangeChart.destroy();
+        if (this.optimalTemperatureChart) this.optimalTemperatureChart.destroy();
+
 
         this.fitnessChart = null;
         this.populationChart = null;
@@ -109,6 +157,13 @@ export const ChartManager = {
         this.visionRangeChart = null;
         this.lifespanChart = null;
         this.biomePreferenceChart = null;
+        // Nullify new chart instances
+        this.attackPowerChart = null;
+        this.defenseChart = null;
+        this.metabolismChart = null;
+        this.clutchSizeChart = null;
+        this.sensoryRangeChart = null;
+        this.optimalTemperatureChart = null;
     },
 
     /**
@@ -124,6 +179,13 @@ export const ChartManager = {
         this.visionRangeData = [];
         this.lifespanData = [];
         this.biomePreferenceData = [];
+        // Clear new chart data arrays
+        this.attackPowerData = [];
+        this.defenseData = [];
+        this.metabolismData = [];
+        this.clutchSizeData = [];
+        this.sensoryRangeData = [];
+        this.optimalTemperatureData = [];
     },
 
     /**
@@ -143,6 +205,14 @@ export const ChartManager = {
         let totalVisionRange = 0;
         let totalLifespan = 0;
         let totalBiomePreference = 0;
+        // New totals for new traits
+        let totalAttackPower = 0;
+        let totalDefense = 0;
+        let totalMetabolism = 0;
+        let totalClutchSize = 0;
+        let totalSensoryRange = 0;
+        let totalOptimalTemperature = 0;
+
         let aliveCreaturesCount = 0;
 
         for (const creature of allCreaturesInGeneration) {
@@ -154,6 +224,14 @@ export const ChartManager = {
                 totalVisionRange += creature.visionRange;
                 totalLifespan += creature.lifespan; // Sum up lifespans
                 totalBiomePreference += creature.biomePreference; // Sum up biome preferences
+                // Sum new traits
+                totalAttackPower += creature.attackPower;
+                totalDefense += creature.defense;
+                totalMetabolism += creature.metabolismRate;
+                totalClutchSize += creature.clutchSize;
+                totalSensoryRange += creature.sensoryRange;
+                totalOptimalTemperature += creature.optimalTemperature;
+
                 aliveCreaturesCount++;
             }
         }
@@ -168,6 +246,13 @@ export const ChartManager = {
             this.visionRangeData.push(totalVisionRange / aliveCreaturesCount);
             this.lifespanData.push(totalLifespan / aliveCreaturesCount); // Avg lifespan
             this.biomePreferenceData.push(totalBiomePreference / aliveCreaturesCount); // Avg biome preference
+            // Push new average traits
+            this.attackPowerData.push(totalAttackPower / aliveCreaturesCount);
+            this.defenseData.push(totalDefense / aliveCreaturesCount);
+            this.metabolismData.push(totalMetabolism / aliveCreaturesCount);
+            this.clutchSizeData.push(totalClutchSize / aliveCreaturesCount);
+            this.sensoryRangeData.push(totalSensoryRange / aliveCreaturesCount);
+            this.optimalTemperatureData.push(totalOptimalTemperature / aliveCreaturesCount);
         } else {
             // If no creatures are alive, push 0 for averages
             this.speedData.push(0);
@@ -176,6 +261,13 @@ export const ChartManager = {
             this.visionRangeData.push(0);
             this.lifespanData.push(0);
             this.biomePreferenceData.push(0);
+            // Push 0 for new averages
+            this.attackPowerData.push(0);
+            this.defenseData.push(0);
+            this.metabolismData.push(0);
+            this.clutchSizeData.push(0);
+            this.sensoryRangeData.push(0);
+            this.optimalTemperatureData.push(0);
         }
 
         // Limit data points to keep charts performant
@@ -189,6 +281,13 @@ export const ChartManager = {
             this.visionRangeData.shift();
             this.lifespanData.shift();
             this.biomePreferenceData.shift();
+            // Shift new chart data
+            this.attackPowerData.shift();
+            this.defenseData.shift();
+            this.metabolismData.shift();
+            this.clutchSizeData.shift();
+            this.sensoryRangeData.shift();
+            this.optimalTemperatureData.shift();
         }
 
         this.fitnessChart.update();
@@ -199,5 +298,12 @@ export const ChartManager = {
         this.visionRangeChart.update();
         this.lifespanChart.update();
         this.biomePreferenceChart.update();
+        // Update new charts
+        this.attackPowerChart.update();
+        this.defenseChart.update();
+        this.metabolismChart.update();
+        this.clutchSizeChart.update();
+        this.sensoryRangeChart.update();
+        this.optimalTemperatureChart.update();
     }
 };
