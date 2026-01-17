@@ -455,6 +455,7 @@ export class Simulation {
         UIManager.updatePopulationCount(this.creatures.filter(c => c.isAlive).length);
         UIManager.updateGenerationProgress(0);
         UIManager.updateBrainDisplays(this.creatures);
+        UIManager.updateCurrentTemperature(this.currentWorldTemperature); // Update overlay temp on new gen
     }
 
     /**
@@ -492,6 +493,8 @@ export class Simulation {
 
         // New: Simulate world temperature fluctuations (simple sine wave)
         this.currentWorldTemperature = 0.5 + Math.sin(this.simulationFrameCount * 0.01) * 0.4; // Ranges from 0.1 to 0.9
+        UIManager.updateCurrentTemperature(this.currentWorldTemperature); // Update overlay
+
 
         let generationEnded = false;
         let aliveCreaturesThisFrame = 0;
@@ -519,7 +522,8 @@ export class Simulation {
                 if (creature.dietType === 1 && creature.energy > SIM_CONFIG.COMBAT_ENERGY_COST * 2) { // Only attack if enough energy
                     for (let k = this.creatures.length - 1; k >= 0; k--) {
                         const otherCreature = this.creatures[k];
-                        if (creature !== otherCreature && otherCreature.isAlive && otherCreature.dietType !== 1) { // Carnivore attacks non-carnivore
+                        // Carnivore attacks non-carnivore AND not self AND is alive
+                        if (creature !== otherCreature && otherCreature.isAlive && otherCreature.dietType !== 1) {
                             const combatHappened = creature.engageCombat(otherCreature);
                             if (combatHappened) {
                                 // If target died, it will be removed in the next filter pass
@@ -557,7 +561,9 @@ export class Simulation {
             } else {
                 maxAgeReachedCount++;
                 // New: If a creature dies, spawn meat at its location
-                if (creature.energy <= 0) { // Ensure it's not just old age, but energy depletion
+                // Check if it died from energy depletion or age, and if it's not a carnivore that was eaten
+                // Simplified: always drop meat if energy <= 0.
+                if (creature.energy <= 0) {
                     this.food.push(new Food(creature.x, creature.y, 'meat', SIM_CONFIG.MEAT_FROM_DEAD_CREATURE));
                 }
             }
@@ -569,6 +575,9 @@ export class Simulation {
         this.replenishFoodGradually(); // Call the new gradual food spawning
 
         UIManager.updatePopulationCount(aliveCreaturesThisFrame);
+        UIManager.updateGenerationCount(this.currentGenerationNumber); // Update control panel gen count
+        UIManager.updateGenerationProgress(Math.min(100, Math.floor((this.simulationFrameCount / this.maxAgeFrames) * 100))); // Update control panel progress
+
 
         if (this.currentGenerationEndMode === 'majorityMaxAge') {
             // In this mode, we check against the global maxAgeFrames derived from the slider,
