@@ -87,10 +87,10 @@ canvas.simulator {
 #togglePauseButton:hover {
     background-color: #ffb300;
 }
-#toggleFoodButton, #toggleBiomesButton {
+#toggleFoodButton, #toggleBiomesButton, #toggleHealthBarsButton { /* Added Health Bars button */
     background-color: #6200EE; /* Deep purple */
 }
-#toggleFoodButton:hover, #toggleBiomesButton:hover {
+#toggleFoodButton:hover, #toggleBiomesButton:hover, #toggleHealthBarsButton:hover {
     background-color: #3700B3;
 }
 
@@ -220,4 +220,114 @@ canvas.simulator {
     border: 1px solid #555;
     margin-top: 10px;
     border-radius: 4px;
+}
+
+/* Creature Info Panel */
+#creatureInfoPanel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 350px;
+    background-color: #252540;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    padding: 25px;
+    z-index: 1000;
+    text-align: left;
+    border: 1px solid #3a3a5e;
+}
+#creatureInfoPanel.hidden {
+    display: none;
+}
+#creatureInfoPanel h3 {
+    text-align: center;
+    color: #FFC107;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+}
+#creatureInfoPanel h4 {
+    color: #BB86FC;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #3a3a5e;
+    padding-bottom: 5px;
+}
+#creatureInfoPanel p {
+    margin: 5px 0;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#creatureInfoPanel p span {
+    font-weight: normal;
+    color: #b0b0b0;
+    text-align: right;
+}
+#creatureInfoPanel .color-box {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+#closeInfoPanelButton {
+    background-color: #CF6679;
+    color: white;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.2s ease;
+}
+#closeInfoPanelButton:hover {
+    background-color: #B00020;
+}
+
+/* Mini-map */
+.mini-map-container {
+    margin-top: 20px;
+    background-color: #3a3a5e;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+.mini-map-container h3 {
+    color: #03DAC6;
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center;
+}
+#miniMapCanvas {
+    border: 1px solid #555;
+    background-color: #2a2a4a;
+    display: block; /* Remove extra space below canvas */
+    margin: 0 auto;
+    border-radius: 4px;
+}
+
+/* Health Bar Styles */
+.health-bar-container {
+    position: absolute;
+    top: -15px; /* Position above creature */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px; /* Width of the bar */
+    height: 4px; /* Height of the bar */
+    background-color: #555;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.health-bar {
+    height: 100%;
+    background-color: #4CAF50; /* Green for healthy */
+    width: 100%; /* Default to full */
+    transition: width 0.1s ease-out; /* Smooth transition for health changes */
 }
