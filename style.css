@@ -230,7 +230,8 @@ canvas.simulator {
     flex-direction: column; /* Stack its children vertically */
     gap: 20px; /* Gap between brain displays */
     
-    /* Constraints for the side-panel itself */
+    /* NEW: Explicit height for the side panel */
+    height: 600px; /* Set a fixed height matching the simulation canvas */
     max-height: 90vh; /* Limits the overall height of the side panel */
     overflow-y: auto; /* Provides a scrollbar for the side panel if its content overflows */
 }
@@ -248,9 +249,9 @@ canvas.simulator {
     text-align: center;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
     
-    /* NEW: Ensure this flex item does not grow or shrink automatically */
-    flex: 0 0 auto; /* Shorthand for flex-grow: 0; flex-shrink: 0; flex-basis: auto; */
-    box-sizing: border-box; /* NEW: Include padding and border in the element's total width and height */
+    /* NEW: Use flex: none to prevent automatic growing/shrinking */
+    flex: none; /* flex-grow: 0; flex-shrink: 0; flex-basis: auto; */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
     
     /* Set a default height to prevent stretching, overridden by manual resize */
     height: 250px; /* Adjust this value as needed for a good default visual size */
@@ -260,7 +261,7 @@ canvas.simulator {
 
     /* Resizable properties */
     resize: both; /* Allow resizing in both directions */
-    overflow: hidden; /* NEW: Hide any content that overflows the div */
+    overflow: hidden; /* Hide any content that overflows the div */
     min-width: 200px; /* Prevent it from becoming too small */
     min-height: 150px; /* Prevent it from becoming too small */
 }
