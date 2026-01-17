@@ -110,7 +110,15 @@
                 </div>
             </div>
 
-            <canvas id="evolutionCanvas" class="simulator" width="800" height="600"></canvas>
+            <div class="main-canvas-container"> <!-- New container for canvas and overlay -->
+                <canvas id="evolutionCanvas" class="simulator" width="800" height="600"></canvas>
+                <div id="simulationStatsOverlay">
+                    <p>Gen: <span id="overlayGenerationCount">0</span></p>
+                    <p>Pop: <span id="overlayPopulationCount">0</span></p>
+                    <p>Prog: <span id="overlayGenerationProgress">0%</span></p>
+                    <p>Temp: <span id="overlayCurrentTemperature">0.5</span></p>
+                </div>
+            </div>
 
             <div class="side-panel">
                 <h2>Top 3 Creature Brains</h2>
