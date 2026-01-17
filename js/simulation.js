@@ -30,6 +30,9 @@ export class Simulation {
         this.biomeMap = [];
         this.currentWorldTemperature = 0.5; // New: Global world temperature (normalized 0-1)
 
+        // NEW: Track current hidden nodes for dynamic NN growth
+        this.currentHiddenNodes = SIM_CONFIG.MIN_BRAIN_HIDDEN_NODES;
+
         // Tunable parameters (linked to sliders, initialized from SIM_CONFIG defaults)
         this.mutationRate = parseFloat(UIManager.mutationRateSlider.value);
         this.mutationStrength = parseFloat(UIManager.mutationStrengthSlider.value);
@@ -48,6 +51,7 @@ export class Simulation {
         this.initialReproductionCooldown = parseInt(UIManager.initialReproductionCooldownSlider.value);
         this.initialClutchSize = parseInt(UIManager.initialClutchSizeSlider.value);
         this.initialSensoryRange = parseInt(UIManager.initialScentHearingRangeSlider.value);
+        this.initialArmor = parseInt(UIManager.initialArmorSlider.value); // NEW: Initial Armor slider value
         // Note: Initial Optimal Temperature is not a slider, it's a genetic trait.
 
         UIManager.init();
@@ -57,7 +61,7 @@ export class Simulation {
 
     /**
      * Adds event listeners for UI controls.
-     */
+     * */
     addEventListeners() {
         UIManager.resetButton.addEventListener('click', () => this.initSimulation());
         UIManager.togglePauseButton.addEventListener('click', () => this.togglePause());
@@ -127,6 +131,10 @@ export class Simulation {
             this.initialSensoryRange = parseInt(e.target.value);
             UIManager.updateSliderValue(UIManager.initialScentHearingRangeValue, this.initialSensoryRange, 'px');
         });
+        UIManager.initialArmorSlider.addEventListener('input', (e) => { // NEW: Armor slider event
+            this.initialArmor = parseInt(e.target.value);
+            UIManager.updateSliderValue(UIManager.initialArmorValue, this.initialArmor);
+        });
 
         UIManager.toggleFoodButton.addEventListener('click', () => {
             this.showFood = !this.showFood;
@@ -161,7 +169,7 @@ export class Simulation {
 
     /**
      * Toggles the simulation's paused state.
-     */
+     * */
     togglePause() {
         this.isPaused = !this.isPaused;
         UIManager.togglePauseButton.textContent = this.isPaused ? 'Resume Simulation' : 'Pause Simulation';
@@ -175,7 +183,7 @@ export class Simulation {
 
     /**
      * Sets the generation end mode to "Majority Max Age".
-     */
+     * */
     setMajorityMaxAgeMode() {
         this.currentGenerationEndMode = 'majorityMaxAge';
         UIManager.updateResetMode('Majority Max Age');
@@ -184,7 +192,7 @@ export class Simulation {
     /**
      * Sets the generation end mode to a fixed time.
      * @param {number} seconds - The duration of the generation in seconds.
-     */
+     * */
     setFixedTimeGeneration(seconds) {
         this.currentGenerationEndMode = 'fixedTime';
         this.fixedTimeGenerationLengthMs = seconds * 1000;
@@ -194,7 +202,7 @@ export class Simulation {
 
     /**
      * Generates a new random biome map.
-     */
+     * */
     generateBiomeMap() {
         this.biomeMap = [];
         const biomeTypesCount = BIOME_TYPES.length;
@@ -208,7 +216,7 @@ export class Simulation {
 
     /**
      * Draws the biome grid on the canvas.
-     */
+     * */
     drawBiomes() {
         if (!this.showBiomes) return;
 
@@ -230,7 +238,7 @@ export class Simulation {
     /**
      * Clears all food and spawns a new set.
      * @param {number} count - The number of food items to spawn.
-     */
+     * */
     resetAndSpawnAllFood(count) {
         this.food = [];
         this.spawnFood(count);
@@ -239,7 +247,7 @@ export class Simulation {
     /**
      * Spawns a specified number of food items, preferring certain biomes.
      * @param {number} count - The number of food items to spawn.
-     */
+     * */
     spawnFood(count) {
         for (let i = 0; i < count; i++) {
             let randomX, randomY;
@@ -275,7 +283,7 @@ export class Simulation {
 
     /**
      * Replenishes food gradually if the current count is below target.
-     */
+     * */
     replenishFoodGradually() {
         if (this.food.length < this.foodCount) {
             const foodToSpawn = Math.min(this.foodCount - this.food.length, Math.floor(SIM_CONFIG.FOOD_SPAWN_RATE));
@@ -289,13 +297,16 @@ export class Simulation {
 
     /**
      * Initializes the entire simulation.
-     */
+     * */
     initSimulation() {
         this.currentGenerationNumber = 0;
         ChartManager.clearData();
         ChartManager.initCharts();
         this.generateBiomeMap();
         UIManager.hideCreatureInfo();
+        
+        // NEW: Reset currentHiddenNodes to minimum on full simulation reset
+        this.currentHiddenNodes = SIM_CONFIG.MIN_BRAIN_HIDDEN_NODES;
 
         const initialCreatures = Array(SIM_CONFIG.FIXED_POPULATION_SIZE).fill(null).map(() => new Creature({
             x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
@@ -304,6 +315,7 @@ export class Simulation {
             speed: SIM_CONFIG.DEFAULT_INITIAL_SPEED,
             size: SIM_CONFIG.DEFAULT_INITIAL_SIZE,
             brain: null,
+            hiddenNodes: this.currentHiddenNodes, // NEW: Pass initial hidden nodes
             visionRange: SIM_CONFIG.DEFAULT_INITIAL_VISION_RANGE,
             lifespan: SIM_CONFIG.DEFAULT_INITIAL_LIFESPAN_FRAMES,
             biomePreference: SIM_CONFIG.DEFAULT_INITIAL_BIOME_PREFERENCE,
@@ -315,6 +327,7 @@ export class Simulation {
             clutchSize: SIM_CONFIG.DEFAULT_INITIAL_CLUTCH_SIZE,
             sensoryRange: SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE,
             optimalTemperature: SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE,
+            armor: SIM_CONFIG.DEFAULT_INITIAL_ARMOR, // NEW: Pass initial armor
         }));
 
         this.setMajorityMaxAgeMode();
@@ -332,7 +345,7 @@ export class Simulation {
 
     /**
      * Ends the current generation and prepares the next one.
-     */
+     * */
     endGenerationAndStartNewOne() {
         const allCreaturesInGeneration = [...this.creatures];
 
@@ -346,10 +359,21 @@ export class Simulation {
 
         const newGenerationCreatures = [];
 
+        // NEW: Logic to potentially increase hidden nodes for the next generation
+        let nextGenerationHiddenNodes = this.currentHiddenNodes;
+        if (this.currentGenerationNumber > 0 && this.currentGenerationNumber % SIM_CONFIG.HIDDEN_NODE_GROWTH_RATE_GENERATIONS === 0) {
+            if (this.currentHiddenNodes < SIM_CONFIG.MAX_BRAIN_HIDDEN_NODES) {
+                nextGenerationHiddenNodes = Math.min(SIM_CONFIG.MAX_BRAIN_HIDDEN_NODES, this.currentHiddenNodes + SIM_CONFIG.HIDDEN_NODE_GROWTH_AMOUNT);
+                console.log(`Generation ${this.currentGenerationNumber}: Increasing hidden nodes to ${nextGenerationHiddenNodes}`);
+            }
+        }
+        this.currentHiddenNodes = nextGenerationHiddenNodes; // Update for next generation
+
         const eliteCount = Math.floor(SIM_CONFIG.FIXED_POPULATION_SIZE * SIM_CONFIG.ELITE_PERCENTAGE);
         for (let i = 0; i < eliteCount; i++) {
             if (sortedCreatures[i]) {
-                newGenerationCreatures.push(sortedCreatures[i].cloneForNextGeneration());
+                // NEW: Pass nextGenerationHiddenNodes to cloned elites
+                newGenerationCreatures.push(sortedCreatures[i].cloneForNextGeneration(this.currentHiddenNodes)); 
             }
         }
 
@@ -363,6 +387,7 @@ export class Simulation {
                 y: Math.random() * SIM_CONFIG.WORLD_HEIGHT,
                 speed: SIM_CONFIG.DEFAULT_INITIAL_SPEED,
                 size: SIM_CONFIG.DEFAULT_INITIAL_SIZE,
+                hiddenNodes: this.currentHiddenNodes, // NEW: Pass current hidden nodes
                 visionRange: SIM_CONFIG.DEFAULT_INITIAL_VISION_RANGE,
                 lifespan: SIM_CONFIG.DEFAULT_INITIAL_LIFESPAN_FRAMES,
                 biomePreference: SIM_CONFIG.DEFAULT_INITIAL_BIOME_PREFERENCE,
@@ -374,6 +399,7 @@ export class Simulation {
                 clutchSize: SIM_CONFIG.DEFAULT_INITIAL_CLUTCH_SIZE,
                 sensoryRange: SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE,
                 optimalTemperature: SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE,
+                armor: SIM_CONFIG.DEFAULT_INITIAL_ARMOR, // NEW: Pass default initial armor
             })));
             return;
         }
@@ -390,8 +416,9 @@ export class Simulation {
             parent1.energy = Math.max(0, parent1.energy);
             parent2.energy = Math.max(0, parent2.energy);
 
-            const offspringBrain = NeuralNetwork.crossover(parent1.brain, parent2.brain);
-            const mutatedOffspringBrain = offspringBrain.cloneAndMutate(offspringBrain, (parent1.fitness + parent2.fitness) / 2, this.mutationRate, this.mutationStrength);
+            // NEW: Pass nextGenerationHiddenNodes to crossover and mutate
+            const offspringBrain = NeuralNetwork.crossover(parent1.brain, parent2.brain, this.currentHiddenNodes);
+            const mutatedOffspringBrain = offspringBrain.cloneAndMutate(offspringBrain, (parent1.fitness + parent2.fitness) / 2, this.mutationRate, this.mutationStrength, this.currentHiddenNodes);
 
             const offspringSpeed = parent1.speed + (Math.random() - 0.5) * this.mutationStrength * SIM_CONFIG.DEFAULT_INITIAL_SPEED * 0.2;
             const offspringSize = parent1.size + (Math.random() - 0.5) * this.mutationStrength * SIM_CONFIG.CREATURE_BASE_RADIUS * 0.5;
@@ -407,6 +434,7 @@ export class Simulation {
             const offspringClutchSize = parent1.mutateClutchSize(parent1.clutchSize, this.mutationRate, this.mutationStrength * SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH_MULTIPLIER);
             const offspringSensoryRange = parent1.mutateSensoryRange(parent1.sensoryRange, this.mutationRate, this.mutationStrength * SIM_CONFIG.SENSORY_RANGE_MUTATION_STRENGTH_MULTIPLIER);
             const offspringOptimalTemperature = parent1.mutateOptimalTemperature(parent1.optimalTemperature, this.mutationRate, this.mutationStrength * SIM_CONFIG.OPTIMAL_TEMPERATURE_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringArmor = parent1.mutateArmor(parent1.armor, this.mutationRate, this.mutationStrength * SIM_CONFIG.ARMOR_MUTATION_STRENGTH_MULTIPLIER); // NEW: Mutate armor
 
             newGenerationCreatures.push(new Creature({
                 x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
@@ -415,6 +443,7 @@ export class Simulation {
                 speed: clamp(offspringSpeed, 0.5, SIM_CONFIG.BASE_SPEED * 2.5),
                 size: clamp(offspringSize, 3, 15),
                 brain: mutatedOffspringBrain,
+                hiddenNodes: this.currentHiddenNodes, // NEW: Pass current hidden nodes
                 visionRange: clamp(offspringVisionRange, 50, 300),
                 lifespan: offspringLifespan,
                 biomePreference: offspringBiomePreference,
@@ -426,6 +455,7 @@ export class Simulation {
                 clutchSize: offspringClutchSize,
                 sensoryRange: offspringSensoryRange,
                 optimalTemperature: offspringOptimalTemperature,
+                armor: offspringArmor, // NEW: Pass mutated armor
             }));
         }
 
@@ -435,7 +465,7 @@ export class Simulation {
     /**
      * Starts a new generation with a given set of creatures.
      * @param {Creature[]} newCreatures - Array of creatures for the new generation.
-     */
+     * */
     startNewGeneration(newCreatures) {
         this.currentGenerationNumber++;
         this.simulationFrameCount = 0;
@@ -459,7 +489,7 @@ export class Simulation {
     /**
      * The main animation loop that calls update and draw.
      * @param {DOMHighResTimeStamp} timestamp - The current time provided by requestAnimationFrame.
-     */
+     * */
     gameLoop(timestamp) {
         if (!this.isPaused) {
             if (timestamp < this.lastFrameTime + this.msPerFrame) {
@@ -482,7 +512,7 @@ export class Simulation {
 
     /**
      * Updates the state of the simulation each frame.
-     */
+     * */
     update() {
         this.simulationFrameCount++;
         const currentTime = performance.now();
@@ -581,7 +611,7 @@ export class Simulation {
 
     /**
      * Draws all elements on the canvas.
-     */
+     * */
     draw() {
         this.ctx.clearRect(0, 0, SIM_CONFIG.WORLD_WIDTH, SIM_CONFIG.WORLD_HEIGHT);
 
