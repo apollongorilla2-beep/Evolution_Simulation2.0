@@ -66,6 +66,8 @@ export class Creature {
         );
         this.trail = []; // For visual trails
         this.maxTrailLength = 30;
+
+        console.log(`Creature Constructor (ID=${this.id}): X=${this.x.toFixed(2)}, Y=${this.y.toFixed(2)}, Alive=${this.isAlive}, Brain Hidden Nodes=${this.brain.hiddenNodes}`); // Debug
     }
 
     /**
@@ -78,7 +80,7 @@ export class Creature {
         const biomeY = Math.floor(this.y / (SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y));
         const clampedX = clamp(biomeX, 0, SIM_CONFIG.BIOME_GRID_X - 1);
         const clampedY = clamp(biomeY, 0, SIM_CONFIG.BIOME_GRID_Y - 1);
-        return BIOME_TYPES[biomeMap[clampedY][clampedX]];
+        return BIOME_TYPES[clampedY] ? BIOME_TYPES[clampedY][clampedX] : BIOME_TYPES[0]; // Defensive check
     }
 
     /**
@@ -157,8 +159,10 @@ export class Creature {
         const biomeY = Math.floor(this.y / (SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y));
         const clampedBiomeX = clamp(biomeX, 0, SIM_CONFIG.BIOME_GRID_X - 1);
         const clampedBiomeY = clamp(biomeY, 0, SIM_CONFIG.BIOME_GRID_Y - 1);
-        const currentBiomeIndex = biomeMap[clampedBiomeY][clampedX];
+        const currentBiomeInMap = BIOME_TYPES[clampedY] ? BIOME_TYPES[clampedY][clampedX] : BIOME_TYPES[0]; // Defensive check
+        const currentBiomeIndex = BIOME_TYPES.findIndex(b => b.type === currentBiomeInMap.type);
         const biomeInput = currentBiomeIndex / (BIOME_TYPES.length - 1);
+
 
         // Vision Range input (normalized)
         let visionRangeInput = clamp(this.visionRange / 300, 0, 1); // Max vision range is 300 from slider
@@ -181,8 +185,7 @@ export class Creature {
         // New: Hazard Proximity input (normalized distance to nearest hazard, if any)
         let hazardProximityInput = 0; // 0 if no hazard, 1 if very close
         const currentBiome = this.getBiome(biomeMap);
-        if (currentBiome.is_hazardous) {
-            // Simplified: if in a hazardous biome, consider it close to a hazard
+        if (currentBiome && currentBiome.is_hazardous) { // Defensive check
             hazardProximityInput = 1;
         }
 
@@ -203,8 +206,8 @@ export class Creature {
         const outputs = this.brain.feedForward(inputs);
 
         // Map outputs to actions: turn rate and speed adjustment
-        const turnRate = outputs[0] * SIM_CONFIG.MAX_TURN_RATE;
-        const speedAdjustment = outputs[1] * SIM_CONFIG.MAX_SPEED_ADJUSTMENT;
+        const turnRate = outputs[0] !== undefined ? outputs[0] * SIM_CONFIG.MAX_TURN_RATE : 0; // Defensive check
+        const speedAdjustment = outputs[1] !== undefined ? outputs[1] * SIM_CONFIG.MAX_SPEED_ADJUSTMENT : 0; // Defensive check
 
         return { turnRate, speedAdjustment };
     }
@@ -362,20 +365,21 @@ export class Creature {
      * @param {number} currentTemperature - The normalized current temperature of the world.
      * */
     update(biomeMap, globalFood, globalCreatures, mutationRate, mutationStrength, currentTemperature) {
+        console.log(`Creature Update (ID=${this.id}, Age=${this.age}): X=${this.x.toFixed(2)}, Y=${this.y.toFixed(2)}, Energy=${this.energy.toFixed(2)}, Alive=${this.isAlive}`); // Debug
         this.age++;
         this.currentReproductionCooldown = Math.max(0, this.currentReproductionCooldown - 1);
 
         const currentBiome = this.getBiome(biomeMap);
 
         // New: Apply metabolism rate
-        let energyDecay = SIM_CONFIG.ENERGY_DECAY_BASE * this.metabolismRate * currentBiome.movement_cost_multiplier;
+        let energyDecay = SIM_CONFIG.ENERGY_DECAY_BASE * this.metabolismRate * (currentBiome ? currentBiome.movement_cost_multiplier : 1.0); // Defensive check
 
         // New: Apply temperature effects
         const tempDeviation = Math.abs(currentTemperature - this.optimalTemperature);
         energyDecay += tempDeviation * SIM_CONFIG.TEMPERATURE_EFFECT_MULTIPLIER;
 
         // New: Apply hazard energy drain
-        if (currentBiome.is_hazardous) {
+        if (currentBiome && currentBiome.is_hazardous) { // Defensive check
             energyDecay += SIM_CONFIG.HAZARD_ENERGY_DRAIN;
         }
 
@@ -421,6 +425,7 @@ export class Creature {
 
         // Creature becomes "not alive" only when it reaches its individual lifespan or runs out of energy
         if (this.age > this.lifespan || this.energy <= 0) {
+            console.log(`Creature (ID=${this.id}) died. Age: ${this.age}, Lifespan: ${this.lifespan}, Energy: ${this.energy.toFixed(2)}`); // Debug
             this.isAlive = false;
         }
     }
@@ -438,10 +443,10 @@ export class Creature {
 
         // Reward for being in a biome it's adapted to (or penalize for being in a bad one)
         const currentBiome = this.getBiome(biomeMap);
-        baseFitness += currentBiome.base_adaptation_score * 75;
+        baseFitness += (currentBiome ? currentBiome.base_adaptation_score : 0) * 75; // Defensive check
 
         // Reward/penalty based on biome preference
-        const currentBiomeIndex = BIOME_TYPES.findIndex(b => b.type === currentBiome.type);
+        const currentBiomeIndex = BIOME_TYPES.findIndex(b => b.type === (currentBiome ? currentBiome.type : BIOME_TYPES[0].type)); // Defensive check
         const biomePreferenceDifference = Math.abs(this.biomePreference - currentBiomeIndex);
         baseFitness -= biomePreferenceDifference * SIM_CONFIG.BIOME_PREFERENCE_FITNESS_MULTIPLIER; // Penalty for being in a non-preferred biome
 
