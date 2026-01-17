@@ -8,7 +8,8 @@ export const SIM_CONFIG = {
     REPRODUCTION_THRESHOLD: 250,
     BASE_SPEED: 1.5,
     WALL_HIT_PENALTY: 10,
-    PARENT_SELECTION_PERCENTAGE: 0.2,
+    PARENT_SELECTION_PERCENTAGE: 0.2, // Percentage of fittest creatures selected for breeding
+    ELITE_PERCENTAGE: 0.05, // Percentage of top creatures to carry over directly (elitism)
     BIOME_GRID_X: 4,
     BIOME_GRID_Y: 3,
     MAX_DATA_POINTS: 500, // Max data points for charts
@@ -20,6 +21,7 @@ export const SIM_CONFIG = {
     MAX_TURN_RATE: 0.4, // Max turn rate in radians
     MAX_SPEED_ADJUSTMENT: 1.0, // Max speed adjustment factor
     INITIAL_VISION_RANGE: 100,
+    WALL_COLLISION_FITNESS_PENALTY: 50, // Direct fitness penalty for hitting walls
 };
 
 export const BIOME_TYPES = [
