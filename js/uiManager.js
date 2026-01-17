@@ -249,11 +249,18 @@ export const UIManager = {
 
         const nodes = { input: [], hidden: [], output: [] };
 
-        // Helper to calculate Y position for a layer
+        // Helper to calculate Y position for a layer, ensuring nodes are fully within bounds
         const calculateYPosition = (index, numNodesInLayer) => {
-            if (numNodesInLayer === 0) return startY + effectiveCanvasHeight / 2; // Center if no nodes
-            if (numNodesInLayer === 1) return startY + effectiveCanvasHeight / 2; // Center single node
-            return startY + (index / (numNodesInLayer - 1)) * effectiveCanvasHeight;
+            // Define the actual drawable area for node centers, accounting for nodeRadius at top/bottom
+            const topBoundary = startY + nodeRadius;
+            const bottomBoundary = startY + effectiveCanvasHeight - nodeRadius;
+            const usableHeight = bottomBoundary - topBoundary;
+
+            if (numNodesInLayer <= 1) {
+                return startY + effectiveCanvasHeight / 2; // Center if 0 or 1 node
+            }
+            // Distribute nodes evenly within the usable height
+            return topBoundary + (index / (numNodesInLayer - 1)) * usableHeight;
         };
 
         // Draw input nodes
@@ -268,11 +275,11 @@ export const UIManager = {
             ctx.strokeStyle = '#555';
             ctx.stroke();
 
-            // Input Labels
+            // Input Labels - adjusted offset
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`; // Dynamic font size
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`;
             ctx.textAlign = 'right';
-            ctx.fillText(inputLabels[i], x - nodeRadius - (nodeRadius * 0.8), y + (nodeRadius * 0.3));
+            ctx.fillText(inputLabels[i], x - nodeRadius - (nodeRadius * 0.5), y + (nodeRadius * 0.3)); 
         }
 
         // Draw hidden nodes
@@ -289,16 +296,16 @@ export const UIManager = {
 
             // Hidden Node Labels (e.g., H1, H2)
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 12)}px Arial`; // Dynamic font size
+            ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 12)}px Arial`;
             ctx.textAlign = 'center';
             ctx.fillText(`H${i + 1}`, x, y + (nodeRadius * 0.3));
 
-            // Bias Indicator for Hidden Nodes
+            // Bias Indicator for Hidden Nodes - adjusted offset
             const biasH = brain.bias_h[i];
             const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x + nodeRadius + (biasIndicatorRadius * 1.5), y, biasMagnitudeH, 0, Math.PI * 2);
+            ctx.arc(x + nodeRadius + (biasIndicatorRadius), y, biasMagnitudeH, 0, Math.PI * 2); 
             ctx.fillStyle = biasColorH;
             ctx.fill();
         }
@@ -315,18 +322,18 @@ export const UIManager = {
             ctx.strokeStyle = '#555';
             ctx.stroke();
 
-            // Output Labels
+            // Output Labels - adjusted offset
             ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`; // Dynamic font size
+            ctx.font = `bold ${clamp(nodeRadius * 1.2, 8, 14)}px Arial`;
             ctx.textAlign = 'left';
-            ctx.fillText(outputLabels[i], x + nodeRadius + (nodeRadius * 0.8), y + (nodeRadius * 0.3));
+            ctx.fillText(outputLabels[i], x + nodeRadius + (nodeRadius * 0.5), y + (nodeRadius * 0.3)); 
 
-            // Bias Indicator for Output Nodes
+            // Bias Indicator for Output Nodes - adjusted offset
             const biasO = brain.bias_o[i];
             const biasColorO = biasO > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeO = clamp(Math.abs(biasO) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x - nodeRadius - (biasIndicatorRadius * 1.5), y, biasMagnitudeO, 0, Math.PI * 2);
+            ctx.arc(x - nodeRadius - (biasIndicatorRadius), y, biasMagnitudeO, 0, Math.PI * 2); 
             ctx.fillStyle = biasColorO;
             ctx.fill();
         }
