@@ -14,6 +14,8 @@ export class NeuralNetwork {
         this.hiddenNodes = hiddenNodes;
         this.outputNodes = outputNodes;
 
+        console.log(`NN Constructor: ID=${this.id}, Input=${inputNodes}, Hidden=${hiddenNodes}, Output=${outputNodes}`); // Debug
+
         // Initialize weights and biases randomly
         this.weights_ih = this.createRandomMatrix(this.inputNodes, this.hiddenNodes);
         this.bias_h = this.createRandomArray(this.hiddenNodes);
@@ -29,7 +31,10 @@ export class NeuralNetwork {
      * @returns {number[][]} A new matrix.
      */
     createRandomMatrix(rows, cols) {
-        if (rows <= 0 || cols <= 0) return []; // Handle zero or negative dimensions gracefully
+        if (rows <= 0 || cols <= 0) {
+            console.warn(`createRandomMatrix: Invalid dimensions (rows=${rows}, cols=${cols}). Returning empty array.`); // Debug
+            return []; // Handle zero or negative dimensions gracefully
+        }
         return Array(rows).fill(0).map(() =>
             Array(cols).fill(0).map(() => (Math.random() - 0.5) * 2)
         );
@@ -41,7 +46,10 @@ export class NeuralNetwork {
      * @returns {number[]} A new array.
      */
     createRandomArray(size) {
-        if (size <= 0) return []; // Handle zero or negative dimensions gracefully
+        if (size <= 0) {
+            console.warn(`createRandomArray: Invalid size (${size}). Returning empty array.`); // Debug
+            return []; // Handle zero or negative dimensions gracefully
+        }
         return Array(size).fill(0).map(() => (Math.random() - 0.5) * 2);
     }
 
@@ -52,7 +60,10 @@ export class NeuralNetwork {
      * @returns {number[]} Resulting vector.
      */
     matrixMultiply(a, b) {
-        if (a.length === 0 || b.length === 0 || b[0].length === 0) return Array(b[0] ? b[0].length : 0).fill(0); // Handle empty inputs
+        if (!a || a.length === 0 || !b || b.length === 0 || !b[0] || b[0].length === 0) {
+            // console.warn(`matrixMultiply: Invalid input or weight matrix. a.length=${a?.length}, b.length=${b?.length}, b[0]?.length=${b?.[0]?.length}. Returning zeros.`); // Debug
+            return Array(b[0] ? b[0].length : 0).fill(0); // Return an array of zeros with correct output size
+        }
         const result = Array(b[0].length).fill(0);
         for (let j = 0; j < b[0].length; j++) {
             for (let i = 0; i < a.length; i++) {
@@ -82,16 +93,27 @@ export class NeuralNetwork {
      * @returns {number[]} Array of output values.
      */
     feedForward(inputs) {
-        if (this.hiddenNodes <= 0) { // If no hidden layer, directly connect input to output (simplified)
-            // This is a very basic direct connection, not a proper NN without hidden layer.
-            // For a real NN, you'd need a different architecture. Here, we'll just output zeros.
-            // Or, you could adapt weights_ih to be weights_io. For simplicity, we'll output neutral.
-            return Array(this.outputNodes).fill(0.5); 
+        if (inputs.length !== this.inputNodes) {
+            console.error(`NN FeedForward (ID=${this.id}): Input array length mismatch. Expected ${this.inputNodes}, got ${inputs.length}.`); // Debug
+            return Array(this.outputNodes).fill(0.5); // Return neutral outputs on error
         }
 
-        // Hidden layer calculation
-        let hidden = this.matrixMultiply(inputs, this.weights_ih);
-        hidden = hidden.map((val, i) => this.relu(val + this.bias_h[i]));
+        let hidden = [];
+        if (this.hiddenNodes > 0) {
+            // Hidden layer calculation
+            hidden = this.matrixMultiply(inputs, this.weights_ih);
+            hidden = hidden.map((val, i) => this.relu(val + this.bias_h[i]));
+        } else {
+            // If no hidden layer, inputs are directly passed to output layer (conceptually)
+            // For a truly basic NN without a hidden layer, weights_ih would be weights_io.
+            // For simplicity in this structure, we'll effectively skip the hidden layer calculations
+            // and treat the inputs as the "hidden" layer for the next step if hiddenNodes is 0.
+            // However, as matrixMultiply expects hidden-to-output, if hiddenNodes is 0,
+            // this will fail. A more robust solution would be to change the architecture
+            // but for now, if hiddenNodes is 0, we'll return neutral outputs to avoid errors.
+            console.warn(`NN FeedForward (ID=${this.id}): Hidden nodes is 0. Returning neutral outputs.`); // Debug
+            return Array(this.outputNodes).fill(0.5);
+        }
 
         // Output layer calculation
         let outputs = this.matrixMultiply(hidden, this.weights_ho);
@@ -127,6 +149,7 @@ export class NeuralNetwork {
         targetHiddenNodes = clamp(targetHiddenNodes, SIM_CONFIG.MIN_BRAIN_HIDDEN_NODES, SIM_CONFIG.MAX_BRAIN_HIDDEN_NODES);
         
         const newBrain = new NeuralNetwork(parentBrain.inputNodes, targetHiddenNodes, parentBrain.outputNodes);
+        console.log(`NN CloneAndMutate: Parent ID=${parentBrain.id}, New ID=${newBrain.id}, Target Hidden=${targetHiddenNodes}`); // Debug
 
         // Helper to mutate a gene value
         const mutateGene = (gene, currentMutationStrength) => {
@@ -166,6 +189,8 @@ export class NeuralNetwork {
         }
 
         // Weights_ho (hidden to output)
+        // Note: The outer loop iterates up to newBrain.hiddenNodes.
+        // The inner loop iterates up to newBrain.outputNodes (fixed).
         for (let i = 0; i < newBrain.hiddenNodes; i++) {
             for (let j = 0; j < newBrain.outputNodes; j++) {
                 if (i < parentBrain.hiddenNodes && j < parentBrain.outputNodes) {
@@ -196,24 +221,22 @@ export class NeuralNetwork {
         targetHiddenNodes = clamp(targetHiddenNodes, SIM_CONFIG.MIN_BRAIN_HIDDEN_NODES, SIM_CONFIG.MAX_BRAIN_HIDDEN_NODES);
 
         const newBrain = new NeuralNetwork(brain1.inputNodes, targetHiddenNodes, brain1.outputNodes);
+        console.log(`NN Crossover: Parent1 ID=${brain1.id}, Parent2 ID=${brain2.id}, New ID=${newBrain.id}, Target Hidden=${targetHiddenNodes}`); // Debug
 
         // Helper to perform crossover on a gene array/matrix
-        const doCrossover = (genes1, genes2, newSize, isMatrix = false) => {
+        const doCrossover = (genes1, genes2, newRows, newCols, isMatrix = false) => {
             const offspringGenes = [];
             if (isMatrix) {
-                const rows = newBrain.inputNodes; // For weights_ih, use newBrain's inputNodes
-                const cols = newSize; // For weights_ih/ho, use targetHiddenNodes or outputNodes
-
-                for (let i = 0; i < rows; i++) {
+                for (let i = 0; i < newRows; i++) {
                     offspringGenes[i] = [];
-                    for (let j = 0; j < cols; j++) {
+                    for (let j = 0; j < newCols; j++) {
                         const val1 = (genes1[i] && genes1[i][j] !== undefined) ? genes1[i][j] : (Math.random() - 0.5) * 2;
                         const val2 = (genes2[i] && genes2[i][j] !== undefined) ? genes2[i][j] : (Math.random() - 0.5) * 2;
                         offspringGenes[i][j] = Math.random() < 0.5 ? val1 : val2;
                     }
                 }
-            } else { // For biases
-                const size = newSize;
+            } else { // For biases (1D array)
+                const size = newRows; // newRows acts as size here
                 for (let i = 0; i < size; i++) {
                     const val1 = genes1[i] !== undefined ? genes1[i] : (Math.random() - 0.5) * 2;
                     const val2 = genes2[i] !== undefined ? genes2[i] : (Math.random() - 0.5) * 2;
@@ -224,10 +247,10 @@ export class NeuralNetwork {
         };
 
         // Perform crossover, adapting to target hidden node count
-        newBrain.weights_ih = doCrossover(brain1.weights_ih, brain2.weights_ih, newBrain.hiddenNodes, true);
-        newBrain.bias_h = doCrossover(brain1.bias_h, brain2.bias_h, newBrain.hiddenNodes);
-        newBrain.weights_ho = doCrossover(brain1.weights_ho, brain2.weights_ho, newBrain.outputNodes, true); // Hidden to output, use newBrain's hiddenNodes as rows
-        newBrain.bias_o = doCrossover(brain1.bias_o, brain2.bias_o, newBrain.outputNodes);
+        newBrain.weights_ih = doCrossover(brain1.weights_ih, brain2.weights_ih, newBrain.inputNodes, newBrain.hiddenNodes, true);
+        newBrain.bias_h = doCrossover(brain1.bias_h, brain2.bias_h, newBrain.hiddenNodes, 0, false); // 0 for cols as it's not a matrix
+        newBrain.weights_ho = doCrossover(brain1.weights_ho, brain2.weights_ho, newBrain.hiddenNodes, newBrain.outputNodes, true);
+        newBrain.bias_o = doCrossover(brain1.bias_o, brain2.bias_o, newBrain.outputNodes, 0, false);
 
         return newBrain;
     }
