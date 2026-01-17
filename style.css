@@ -221,6 +221,13 @@ canvas.simulator {
     flex: 0 0 350px; /* Fixed width for side panel */
     min-width: 350px;
     padding: 20px;
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    font-size: 0.95em;
+    text-align: center;
+    box-sizing: border-box;
+    overflow-y: auto; /* Allow vertical scrolling for long content */
+    max-height: 90vh; /* Limit height to viewport height */
     display: flex; /* Make side-panel a flex container */
     flex-direction: column; /* Stack its children vertically */
     gap: 20px; /* Gap between brain displays */
@@ -241,7 +248,7 @@ canvas.simulator {
     flex-grow: 1; /* Allow to grow and shrink vertically */
     display: flex; /* Make it a flex container for its children */
     flex-direction: column;
-    
+
     /* NEW: Resizable properties */
     resize: both; /* Allow resizing in both directions */
     overflow: auto; /* Essential for resize to work */
@@ -267,14 +274,20 @@ canvas.simulator {
     vertical-align: middle;
 }
 .brain-canvas {
-    width: 100%;
-    height: 100%; /* Fill parent's height */
+    /* These will be set by JavaScript dynamically to match the parent div's size. */
     background-color: #2a2a4a;
     border: 1px solid #555;
     margin-top: 0; /* Reset margin-top */
     border-radius: 4px;
     display: block;
     flex-grow: 1; /* Allow canvas to grow within its parent */
+    /* Ensure the canvas visually occupies the space. */
+    width: -webkit-fill-available; /* For browser compatibility */
+    width: -moz-available;
+    width: fill-available;
+    height: -webkit-fill-available;
+    height: -moz-available;
+    height: fill-available;
 }
 
 /* Charts Area */
@@ -386,8 +399,9 @@ canvas.simulator {
     display: flex;
     flex-direction: column;
     align-items: center; /* Center content horizontally */
-    width: 100%;
-    max-width: 400px; /* Give it a reasonable max width */
+    width: 400px; /* Fixed width for the container */
+    height: 300px; /* Fixed height for the container */
+    flex-shrink: 0; /* Prevent it from shrinking */
 }
 .mini-map-container h3 {
     color: #03DAC6;
@@ -398,7 +412,7 @@ canvas.simulator {
 }
 #miniMapCanvas {
     width: 100%; /* Fill parent's width */
-    height: 250px; /* Fixed height for mini-map to make it visually consistent */
+    height: 100%; /* Fill parent's height */
     border: 1px solid #555;
     background-color: #2a2a4a;
     display: block;
