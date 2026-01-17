@@ -282,12 +282,8 @@ canvas.simulator {
     display: block;
     flex-grow: 1; /* Allow canvas to grow within its parent */
     /* Ensure the canvas visually occupies the space. */
-    width: -webkit-fill-available; /* For browser compatibility */
-    width: -moz-available;
-    width: fill-available;
-    height: -webkit-fill-available;
-    height: -moz-available;
-    height: fill-available;
+    width: 100%; /* Changed from fill-available */
+    height: 100%; /* Changed from fill-available */
 }
 
 /* Charts Area */
@@ -401,7 +397,8 @@ canvas.simulator {
     align-items: center; /* Center content horizontally */
     width: 400px; /* Fixed width for the container */
     height: 300px; /* Fixed height for the container */
-    flex-shrink: 0; /* Prevent it from shrinking */
+    flex-shrink: 0; /* NEW: Prevent it from shrinking */
+    flex-grow: 0; /* NEW: Prevent it from growing */
 }
 .mini-map-container h3 {
     color: #03DAC6;
