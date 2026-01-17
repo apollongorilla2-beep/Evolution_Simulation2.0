@@ -22,30 +22,36 @@ export const SIM_CONFIG = {
     BRAIN_OUTPUT_NODES: 2, // Turn Rate, Speed Adjustment (Aggression/Avoidance can be implicit from creature sensing inputs)
     MAX_TURN_RATE: 0.4, // Max turn rate in radians
     MAX_SPEED_ADJUSTMENT: 1.0, // Max speed adjustment factor
-    INITIAL_VISION_RANGE: 100,
     WALL_COLLISION_FITNESS_PENALTY: 50, // Direct fitness penalty for hitting walls
-    INITIAL_LIFESPAN_SECONDS: 50, // Default initial lifespan in seconds
-    LIFESPAN_MUTATION_STRENGTH: 0.1, // How much lifespan can mutate
-    BIOME_PREFERENCE_MUTATION_STRENGTH: 0.2, // How much biome preference can mutate
-    BIOME_PREFERENCE_FITNESS_MULTIPLIER: 50, // How strongly biome preference affects fitness
 
-    // New Genetic Trait Defaults & Mutation Strengths
-    INITIAL_DIET_TYPE: 0, // 0 = Herbivore, 1 = Carnivore
-    DIET_TYPE_MUTATION_STRENGTH: 0.5, // Chance to flip diet type
-    INITIAL_ATTACK_POWER: 10,
-    ATTACK_POWER_MUTATION_STRENGTH: 0.5,
-    INITIAL_DEFENSE: 5,
-    DEFENSE_MUTATION_STRENGTH: 0.5,
-    INITIAL_METABOLISM_RATE: 0.03, // Multiplier for ENERGY_DECAY_BASE
-    METABOLISM_MUTATION_STRENGTH: 0.01,
-    INITIAL_REPRODUCTION_COOLDOWN: 60, // Frames
-    REPRODUCTION_COOLDOWN_MUTATION_STRENGTH: 10,
-    INITIAL_CLUTCH_SIZE: 2,
-    CLUTCH_SIZE_MUTATION_STRENGTH: 0.5,
-    INITIAL_SENSORY_RANGE: 50, // For scent/hearing
-    SENSORY_RANGE_MUTATION_STRENGTH: 10,
-    INITIAL_OPTIMAL_TEMPERATURE: 0.5, // Normalized 0-1 (e.g., 0=cold, 0.5=mild, 1=hot)
-    OPTIMAL_TEMPERATURE_MUTATION_STRENGTH: 0.1,
+    // --- New: Default "Basic" Starting Traits for Generation 0 ---
+    DEFAULT_INITIAL_SPEED: 1.5,
+    DEFAULT_INITIAL_SIZE: 5,
+    DEFAULT_INITIAL_VISION_RANGE: 100,
+    DEFAULT_INITIAL_LIFESPAN_FRAMES: 50 * 60, // 50 seconds
+    DEFAULT_INITIAL_BIOME_PREFERENCE: 0, // Grassland (index 0)
+    DEFAULT_INITIAL_DIET_TYPE: 0, // Herbivore
+    DEFAULT_INITIAL_ATTACK_POWER: 5, // Low attack
+    DEFAULT_INITIAL_DEFENSE: 5, // Average defense
+    DEFAULT_INITIAL_METABOLISM_RATE: 0.03, // Base
+    DEFAULT_INITIAL_REPRODUCTION_COOLDOWN_FRAMES: 60, // 1 second
+    DEFAULT_INITIAL_CLUTCH_SIZE: 1, // Single offspring
+    DEFAULT_INITIAL_SENSORY_RANGE: 0, // No extra sensory range
+    DEFAULT_INITIAL_OPTIMAL_TEMPERATURE: 0.5, // Mild temperature
+
+    // Trait-specific Mutation Strengths (sliders will adjust these multipliers)
+    LIFESPAN_MUTATION_STRENGTH_MULTIPLIER: 0.1,
+    BIOME_PREFERENCE_MUTATION_STRENGTH_MULTIPLIER: 0.2,
+    DIET_TYPE_MUTATION_CHANCE_MULTIPLIER: 0.5,
+    ATTACK_POWER_MUTATION_STRENGTH_MULTIPLIER: 0.5,
+    DEFENSE_MUTATION_STRENGTH_MULTIPLIER: 0.5,
+    METABOLISM_MUTATION_STRENGTH_MULTIPLIER: 0.01,
+    REPRODUCTION_COOLDOWN_MUTATION_STRENGTH_MULTIPLIER: 10,
+    CLUTCH_SIZE_MUTATION_STRENGTH_MULTIPLIER: 0.5,
+    SENSORY_RANGE_MUTATION_STRENGTH_MULTIPLIER: 10,
+    OPTIMAL_TEMPERATURE_MUTATION_STRENGTH_MULTIPLIER: 0.1,
+
+    BIOME_PREFERENCE_FITNESS_MULTIPLIER: 50, // How strongly biome preference affects fitness
 
     // Combat System
     COMBAT_RANGE: 10, // Distance within which creatures can engage in combat
