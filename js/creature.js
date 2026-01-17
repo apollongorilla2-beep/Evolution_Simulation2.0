@@ -157,7 +157,7 @@ export class Creature {
         const biomeY = Math.floor(this.y / (SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y));
         const clampedBiomeX = clamp(biomeX, 0, SIM_CONFIG.BIOME_GRID_X - 1);
         const clampedBiomeY = clamp(biomeY, 0, SIM_CONFIG.BIOME_GRID_Y - 1);
-        const currentBiomeIndex = biomeMap[clampedBiomeY][clampedBiomeX];
+        const currentBiomeIndex = biomeMap[clampedBiomeY][clampedX];
         const biomeInput = currentBiomeIndex / (BIOME_TYPES.length - 1);
 
         // Vision Range input (normalized)
