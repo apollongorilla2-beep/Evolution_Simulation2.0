@@ -182,27 +182,28 @@ export const UIManager = {
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        ctx.fillStyle = '#2a2a4a'; /* Matches simulation canvas background */
+        ctx.fillStyle = '#2a2a4a'; // Matches simulation canvas background
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        const nodeRadius = 6; // Slightly smaller nodes for more space
-        const horizontalSpacing = canvasWidth / 4;
+        const nodeRadius = 8; // Slightly larger nodes
+        const biasIndicatorRadius = 3; // Small radius for bias indicator
+        const horizontalSpacing = canvasWidth / (brain.inputNodes > 0 && brain.outputNodes > 0 ? 4 : 3); // More dynamic spacing
 
         const inputNodes = brain.inputNodes;
         const hiddenNodes = brain.hiddenNodes;
         const outputNodes = brain.outputNodes;
 
         // Adjust vertical spacing based on actual canvas height and number of nodes
-        const inputYStep = canvasHeight / (inputNodes + 2); // +2 for top/bottom margin
-        const hiddenYStep = canvasHeight / (hiddenNodes + 2);
-        const outputYStep = canvasHeight / (outputNodes + 2);
+        const inputYStep = canvasHeight / (inputNodes + 1); // +1 for top/bottom margin
+        const hiddenYStep = canvasHeight / (hiddenNodes + 1);
+        const outputYStep = canvasHeight / (outputNodes + 1);
 
         const nodes = { input: [], hidden: [], output: [] };
 
         // Draw input nodes
         for (let i = 0; i < inputNodes; i++) {
             const x = horizontalSpacing;
-            const y = (i + 1.5) * inputYStep; // Adjusted y for better centering
+            const y = (i + 0.5) * inputYStep + inputYStep / 2; // Centered
             nodes.input.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -210,16 +211,18 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
-            ctx.fillStyle = 'white'; // Ensured white for readability
-            ctx.font = 'bold 9px Arial'; // Slightly smaller font
+
+            // Input Labels
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 10px Arial'; // Larger font
             ctx.textAlign = 'right';
-            ctx.fillText(inputLabels[i], x - nodeRadius - 5, y + 3); // Adjusted x for label
+            ctx.fillText(inputLabels[i], x - nodeRadius - 8, y + 3); // Adjusted x for label, more space
         }
 
         // Draw hidden nodes
         for (let i = 0; i < hiddenNodes; i++) {
             const x = horizontalSpacing * 2;
-            const y = (i + 1.5) * hiddenYStep; // Adjusted y for better centering
+            const y = (i + 0.5) * hiddenYStep + hiddenYStep / 2; // Centered
             nodes.hidden.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -227,12 +230,27 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
+
+            // Hidden Node Labels (e.g., H1, H2)
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 9px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`H${i + 1}`, x, y + 3);
+
+            // Bias Indicator for Hidden Nodes
+            const biasH = brain.bias_h[i];
+            const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)'; // Green for positive, Red for negative
+            const biasMagnitudeH = clamp(Math.abs(biasH) * 2, 0.5, 3); // Scale bias indicator size
+            ctx.beginPath();
+            ctx.arc(x + nodeRadius + biasIndicatorRadius * 2, y, biasMagnitudeH, 0, Math.PI * 2);
+            ctx.fillStyle = biasColorH;
+            ctx.fill();
         }
 
         // Draw output nodes
         for (let i = 0; i < outputNodes; i++) {
             const x = horizontalSpacing * 3;
-            const y = (i + 1.5) * outputYStep; // Adjusted y for better centering
+            const y = (i + 0.5) * outputYStep + outputYStep / 2; // Centered
             nodes.output.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -240,10 +258,21 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
-            ctx.fillStyle = 'white'; // Ensured white for readability
-            ctx.font = 'bold 9px Arial'; // Slightly smaller font
+
+            // Output Labels
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 10px Arial'; // Larger font
             ctx.textAlign = 'left';
-            ctx.fillText(outputLabels[i], x + nodeRadius + 5, y + 3); // Adjusted x for label
+            ctx.fillText(outputLabels[i], x + nodeRadius + 8, y + 3); // Adjusted x for label, more space
+
+            // Bias Indicator for Output Nodes
+            const biasO = brain.bias_o[i];
+            const biasColorO = biasO > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
+            const biasMagnitudeO = clamp(Math.abs(biasO) * 2, 0.5, 3);
+            ctx.beginPath();
+            ctx.arc(x - nodeRadius - biasIndicatorRadius * 2, y, biasMagnitudeO, 0, Math.PI * 2);
+            ctx.fillStyle = biasColorO;
+            ctx.fill();
         }
 
         // Draw connections (weights) from input to hidden layer
@@ -253,9 +282,9 @@ export const UIManager = {
                 ctx.beginPath();
                 ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
                 ctx.lineTo(nodes.hidden[j].x, nodes.hidden[j].y);
-                // Reduced and clamped line width for better clarity
-                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.1, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.1, 1)})`;
-                ctx.lineWidth = clamp(Math.abs(weight) * 0.8, 0.5, 2.5); // Max line width 2.5px
+                // More distinct colors and thicker lines
+                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
+                ctx.lineWidth = clamp(Math.abs(weight) * 2, 0.8, 4); // Max line width 4px
                 ctx.stroke();
             }
         }
@@ -267,9 +296,9 @@ export const UIManager = {
                 ctx.beginPath();
                 ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
                 ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
-                // Reduced and clamped line width for better clarity
-                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.1, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.1, 1)})`;
-                ctx.lineWidth = clamp(Math.abs(weight) * 0.8, 0.5, 2.5); // Max line width 2.5px
+                // More distinct colors and thicker lines
+                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
+                ctx.lineWidth = clamp(Math.abs(weight) * 2, 0.8, 4); // Max line width 4px
                 ctx.stroke();
             }
         }
@@ -351,6 +380,8 @@ export const UIManager = {
 
     /**
      * Hides the creature information panel.
+     * @param {Creature} creature - The creature to display.
+     * @param {number[][]} biomeMap - The current biome map.
      */
     hideCreatureInfo() {
         if (this.creatureInfoPanel) {
