@@ -1,4 +1,5 @@
 import { SIM_CONFIG } from './constants.js';
+import { BIOME_TYPES } from './constants.js'; // Import BIOME_TYPES
 
 export const ChartManager = {
     generationLabels: [],
@@ -7,14 +8,18 @@ export const ChartManager = {
     speedData: [],
     sizeData: [],
     foodEatenData: [],
-    visionRangeData: [], // New chart data for vision range
+    visionRangeData: [],
+    lifespanData: [], // New chart data for lifespan
+    biomePreferenceData: [], // New chart data for biome preference
 
     fitnessChart: null,
     populationChart: null,
     speedChart: null,
     sizeChart: null,
     foodEatenChart: null,
-    visionRangeChart: null, // New chart instance
+    visionRangeChart: null,
+    lifespanChart: null, // New chart instance
+    biomePreferenceChart: null, // New chart instance
 
     /**
      * Initializes all Chart.js instances.
@@ -73,6 +78,14 @@ export const ChartManager = {
             type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Vision Range', data: this.visionRangeData, borderColor: 'rgb(153, 102, 255)', tension: 0.1, fill: false }] },
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
         });
+        this.lifespanChart = new Chart(document.getElementById('lifespanChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Lifespan (frames)', data: this.lifespanData, borderColor: 'rgb(0, 123, 255)', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
+        });
+        this.biomePreferenceChart = new Chart(document.getElementById('biomePreferenceChart'), {
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Biome Preference Index', data: this.biomePreferenceData, borderColor: 'rgb(255, 193, 7)', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: BIOME_TYPES.length - 1, stepSize: 1 } } }
+        });
     },
 
     /**
@@ -85,6 +98,8 @@ export const ChartManager = {
         if (this.sizeChart) this.sizeChart.destroy();
         if (this.foodEatenChart) this.foodEatenChart.destroy();
         if (this.visionRangeChart) this.visionRangeChart.destroy();
+        if (this.lifespanChart) this.lifespanChart.destroy();
+        if (this.biomePreferenceChart) this.biomePreferenceChart.destroy();
 
         this.fitnessChart = null;
         this.populationChart = null;
@@ -92,6 +107,8 @@ export const ChartManager = {
         this.sizeChart = null;
         this.foodEatenChart = null;
         this.visionRangeChart = null;
+        this.lifespanChart = null;
+        this.biomePreferenceChart = null;
     },
 
     /**
@@ -105,6 +122,8 @@ export const ChartManager = {
         this.sizeData = [];
         this.foodEatenData = [];
         this.visionRangeData = [];
+        this.lifespanData = [];
+        this.biomePreferenceData = [];
     },
 
     /**
@@ -122,6 +141,8 @@ export const ChartManager = {
         let totalSize = 0;
         let totalFoodEaten = 0;
         let totalVisionRange = 0;
+        let totalLifespan = 0;
+        let totalBiomePreference = 0;
         let aliveCreaturesCount = 0;
 
         for (const creature of allCreaturesInGeneration) {
@@ -131,6 +152,8 @@ export const ChartManager = {
                 totalSize += creature.size;
                 totalFoodEaten += creature.foodEatenCount;
                 totalVisionRange += creature.visionRange;
+                totalLifespan += creature.lifespan; // Sum up lifespans
+                totalBiomePreference += creature.biomePreference; // Sum up biome preferences
                 aliveCreaturesCount++;
             }
         }
@@ -143,12 +166,16 @@ export const ChartManager = {
             this.sizeData.push(totalSize / aliveCreaturesCount);
             this.foodEatenData.push(totalFoodEaten / aliveCreaturesCount);
             this.visionRangeData.push(totalVisionRange / aliveCreaturesCount);
+            this.lifespanData.push(totalLifespan / aliveCreaturesCount); // Avg lifespan
+            this.biomePreferenceData.push(totalBiomePreference / aliveCreaturesCount); // Avg biome preference
         } else {
             // If no creatures are alive, push 0 for averages
             this.speedData.push(0);
             this.sizeData.push(0);
             this.foodEatenData.push(0);
             this.visionRangeData.push(0);
+            this.lifespanData.push(0);
+            this.biomePreferenceData.push(0);
         }
 
         // Limit data points to keep charts performant
@@ -160,6 +187,8 @@ export const ChartManager = {
             this.sizeData.shift();
             this.foodEatenData.shift();
             this.visionRangeData.shift();
+            this.lifespanData.shift();
+            this.biomePreferenceData.shift();
         }
 
         this.fitnessChart.update();
@@ -168,5 +197,7 @@ export const ChartManager = {
         this.sizeChart.update();
         this.foodEatenChart.update();
         this.visionRangeChart.update();
+        this.lifespanChart.update();
+        this.biomePreferenceChart.update();
     }
 };
