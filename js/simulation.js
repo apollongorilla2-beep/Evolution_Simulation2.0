@@ -32,9 +32,11 @@ export class Simulation {
         this.mutationRate = parseFloat(UIManager.mutationRateSlider.value);
         this.mutationStrength = parseFloat(UIManager.mutationStrengthSlider.value);
         this.foodCount = parseInt(UIManager.foodCountSlider.value);
-        this.maxAgeFrames = parseInt(UIManager.maxAgeSlider.value) * 60;
+        this.initialLifespanSeconds = parseInt(UIManager.initialLifespanSlider.value); // New: Initial lifespan from slider
+        this.maxAgeFrames = this.initialLifespanSeconds * 60; // Max age for majorityMaxAge mode (derived from lifespan slider)
         this.animationFps = parseInt(UIManager.animationSpeedSlider.value);
         this.visionRange = parseInt(UIManager.visionRangeSlider.value);
+        this.initialBiomePreference = parseInt(UIManager.initialBiomePreferenceSlider.value); // New: Initial biome preference from slider
         this.msPerFrame = 1000 / this.animationFps;
 
 
@@ -72,16 +74,21 @@ export class Simulation {
             this.foodCount = parseInt(e.target.value);
             UIManager.updateSliderValue(UIManager.foodCountValue, this.foodCount);
             if (this.currentGenerationNumber > 0) {
-                this.resetAndSpawnAllFood(this.foodCount);
+                // No full food reset here, let gradual spawning handle it
             }
         });
-        UIManager.maxAgeSlider.addEventListener('input', (e) => {
-            this.maxAgeFrames = parseInt(e.target.value) * 60;
-            UIManager.updateSliderValue(UIManager.maxAgeValue, parseInt(e.target.value), 's');
+        UIManager.initialLifespanSlider.addEventListener('input', (e) => { // New slider event
+            this.initialLifespanSeconds = parseInt(e.target.value);
+            this.maxAgeFrames = this.initialLifespanSeconds * 60; // Update maxAgeFrames for majority mode
+            UIManager.updateSliderValue(UIManager.initialLifespanValue, this.initialLifespanSeconds, 's');
         });
         UIManager.visionRangeSlider.addEventListener('input', (e) => {
             this.visionRange = parseInt(e.target.value);
             UIManager.updateSliderValue(UIManager.visionRangeValue, this.visionRange, 'px');
+        });
+        UIManager.initialBiomePreferenceSlider.addEventListener('input', (e) => { // New slider event
+            this.initialBiomePreference = parseInt(e.target.value);
+            UIManager.updateSliderValue(UIManager.initialBiomePreferenceValue, this.initialBiomePreference);
         });
 
         UIManager.toggleFoodButton.addEventListener('click', () => {
@@ -206,12 +213,17 @@ export class Simulation {
     }
 
     /**
-     * Replenishes food if the current count is below target.
-     * @param {number} count - The number of food items to replenish.
+     * Replenishes food gradually if the current count is below target.
      */
-    replenishFood(count) {
+    replenishFoodGradually() {
         if (this.food.length < this.foodCount) {
-            this.spawnFood(count);
+            // Spawn a few food items per frame based on FOOD_SPAWN_RATE
+            const foodToSpawn = Math.min(this.foodCount - this.food.length, Math.floor(SIM_CONFIG.FOOD_SPAWN_RATE));
+            if (foodToSpawn > 0) {
+                this.spawnFood(foodToSpawn);
+            } else if (Math.random() < SIM_CONFIG.FOOD_SPAWN_RATE % 1) { // Handle fractional spawn rate
+                this.spawnFood(1);
+            }
         }
     }
 
@@ -231,7 +243,9 @@ export class Simulation {
             SIM_CONFIG.BASE_SPEED + (Math.random() - 0.5), // initial varied speed
             SIM_CONFIG.CREATURE_BASE_RADIUS + (Math.random() - 0.5) * 2, // initial varied size
             null, // new brain
-            this.visionRange + (Math.random() - 0.5) * 50 // initial varied vision range
+            this.visionRange + (Math.random() - 0.5) * 50, // initial varied vision range
+            this.initialLifespanSeconds * 60 + (Math.random() - 0.5) * 60 * 10, // Varied initial lifespan
+            clamp(this.initialBiomePreference + Math.round((Math.random() - 0.5) * 2), 0, BIOME_TYPES.length - 1) // Varied initial biome preference
         ));
 
         this.setMajorityMaxAgeMode(); // Set default reset mode
@@ -295,6 +309,14 @@ export class Simulation {
                 parent2 = parents[Math.floor(Math.random() * parents.length)];
             }
 
+            // New: Apply reproduction energy cost to parents
+            parent1.energy -= SIM_CONFIG.REPRODUCTION_ENERGY_COST / 2;
+            parent2.energy -= SIM_CONFIG.REPRODUCTION_ENERGY_COST / 2;
+            // Ensure energy doesn't go below zero
+            parent1.energy = Math.max(0, parent1.energy);
+            parent2.energy = Math.max(0, parent2.energy);
+
+
             // Crossover brains
             const offspringBrain = NeuralNetwork.crossover(parent1.brain, parent2.brain);
             // Mutate offspring brain
@@ -304,6 +326,9 @@ export class Simulation {
             const offspringSpeed = parent1.speed + (Math.random() - 0.5) * this.mutationStrength;
             const offspringSize = parent1.size + (Math.random() - 0.5) * this.mutationStrength * 1.5;
             const offspringVisionRange = parent1.mutateVisionRange(parent1.visionRange, this.mutationRate, this.mutationStrength);
+            const offspringLifespan = parent1.mutateLifespan(parent1.lifespan, this.mutationRate, this.mutationStrength); // New: Mutate lifespan
+            const offspringBiomePreference = parent1.mutateBiomePreference(parent1.biomePreference, this.mutationRate, this.mutationStrength); // New: Mutate biome preference
+
 
             newGenerationCreatures.push(new Creature(
                 Math.random() * SIM_CONFIG.WORLD_WIDTH,
@@ -312,7 +337,9 @@ export class Simulation {
                 clamp(offspringSpeed, 0.5, SIM_CONFIG.BASE_SPEED * 2.5),
                 clamp(offspringSize, 3, 15),
                 mutatedOffspringBrain,
-                clamp(offspringVisionRange, 50, 300)
+                clamp(offspringVisionRange, 50, 300),
+                offspringLifespan, // Pass mutated lifespan
+                offspringBiomePreference // Pass mutated biome preference
             ));
         }
 
@@ -329,7 +356,7 @@ export class Simulation {
         this.lastGenerationStartTime = performance.now();
 
         this.creatures = newCreatures;
-        this.resetAndSpawnAllFood(this.foodCount);
+        this.resetAndSpawnAllFood(this.foodCount); // Reset food for new generation
 
         UIManager.updateGenerationCount(this.currentGenerationNumber);
         UIManager.updatePopulationCount(this.creatures.filter(c => c.isAlive).length);
@@ -377,8 +404,7 @@ export class Simulation {
         for (let i = this.creatures.length - 1; i >= 0; i--) {
             const creature = this.creatures[i];
             if (creature.isAlive) {
-                creature.update(this.biomeMap, this.food, this.mutationRate, this.mutationStrength);
-
+                creature.update(this.biomeMap, this.food, this.creatures, this.mutationRate, this.mutationStrength); // Pass this.creatures
                 // Collision detection for eating (only for alive creatures)
                 for (let j = this.food.length - 1; j >= 0; j--) {
                     const f = this.food[j];
@@ -396,11 +422,13 @@ export class Simulation {
             }
         }
 
-        this.replenishFood(1);
+        this.replenishFoodGradually(); // Call the new gradual food spawning
 
         UIManager.updatePopulationCount(aliveCreaturesThisFrame);
 
         if (this.currentGenerationEndMode === 'majorityMaxAge') {
+            // In this mode, we check against the global maxAgeFrames derived from the slider,
+            // or if all creatures are dead.
             const majorityReached = maxAgeReachedCount > (SIM_CONFIG.FIXED_POPULATION_SIZE / 2);
             if (majorityReached || aliveCreaturesThisFrame === 0) {
                 generationEnded = true;
@@ -438,6 +466,7 @@ export class Simulation {
 
         for (const creature of this.creatures) {
             creature.draw(this.ctx);
+            // Calculate fitness here again for display highlighting, as it might change
             if (creature.isAlive && creature.calculateFitness(this.biomeMap) > highestFitness) {
                 highestFitness = creature.calculateFitness(this.biomeMap);
                 bestCreature = creature;
