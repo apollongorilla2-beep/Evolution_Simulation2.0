@@ -14,10 +14,21 @@ body {
 }
 main {
     display: flex;
+    flex-direction: column; /* Stack simulation area and charts area vertically */
+    align-items: center; /* Center main content */
     gap: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
+    width: 100%; /* Take full width */
 }
+
+#simulation-wrapper {
+    display: flex;
+    justify-content: center; /* Center the three columns */
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px; /* Max width for the entire simulation + side panels */
+    flex-wrap: wrap; /* Allow wrapping on very small screens, though it's designed for wider screens */
+}
+
 .main-content {
     display: flex;
     flex-direction: column;
@@ -29,8 +40,9 @@ canvas.simulator {
     background-color: #2a2a4a; /* Dark blue-purple for canvas */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); /* Add depth */
     border-radius: 8px; /* Slightly rounded corners */
+    flex-shrink: 0; /* Prevent canvas from shrinking */
 }
-#controls, .chart-container, .side-panel {
+#controls, .side-panel {
     background-color: #252540; /* Darker panel background */
     padding: 15px; /* Increased padding */
     border-radius: 8px; /* Rounded corners */
@@ -38,14 +50,34 @@ canvas.simulator {
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
+    overflow-y: auto; /* Allow vertical scrolling for long content */
+    max-height: 90vh; /* Limit height to viewport height */
 }
 #controls {
-    min-width: 250px;
-    max-width: 350px;
+    flex: 0 0 280px; /* Fixed width for controls */
+    min-width: 280px;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Space out controls */
+    gap: 15px; /* Space out control groups */
 }
+
+.control-group {
+    border-bottom: 1px solid #3a3a5e;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+.control-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.control-group h3 {
+    color: #BB86FC; /* Light purple for group titles */
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
 #controls p {
     margin: 0 0 5px 0;
     color: #b0b0b0; /* Slightly lighter text for status */
@@ -117,7 +149,7 @@ canvas.simulator {
     color: #e0e0e0;
 }
 #controls .slider-group {
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Slightly less margin for sliders within groups */
 }
 #controls input[type="range"] {
     -webkit-appearance: none;
@@ -152,33 +184,19 @@ canvas.simulator {
 }
 
 #resetOptions {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #3a3a5e; /* Softer divider */
+    border-top: none; /* Already handled by control-group border */
+    padding-top: 0;
+    margin-top: 0;
 }
-#resetOptions h4 {
+#resetOptions h3 { /* Changed from h4 to h3 for consistency */
     color: #f0f0f0;
     margin-top: 0;
     margin-bottom: 10px;
 }
 
-.chart-container {
-    width: 800px;
-    height: 400px;
-    padding: 20px;
-    margin-bottom: 10px; /* Space between charts */
-}
-.chart-container h3 {
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #03DAC6; /* Teal for chart titles */
-    font-size: 1.2em;
-}
-
-/* Side Panel for Neural Networks */
 .side-panel {
-    width: 350px;
+    flex: 0 0 350px; /* Fixed width for side panel */
+    min-width: 350px;
     padding: 20px;
 }
 .side-panel h2 {
@@ -222,13 +240,40 @@ canvas.simulator {
     border-radius: 4px;
 }
 
+/* Charts Area */
+#charts-area {
+    display: grid;
+    /* Responsive grid: 2 columns by default, 1 on smaller screens, 3 on larger */
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px; /* Match max-width of simulation-wrapper */
+    margin-top: 20px;
+}
+
+.chart-container {
+    height: 400px; /* Fixed height for charts */
+    padding: 20px;
+    background-color: #252540;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box; /* Include padding in height */
+}
+.chart-container h3 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #03DAC6; /* Teal for chart titles */
+    font-size: 1.2em;
+}
+
 /* Creature Info Panel */
 #creatureInfoPanel {
-    position: absolute;
+    position: fixed; /* Changed to fixed to stay in viewport */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 350px;
+    width: 380px; /* Slightly wider */
     background-color: #252540;
     border-radius: 8px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
@@ -236,6 +281,8 @@ canvas.simulator {
     z-index: 1000;
     text-align: left;
     border: 1px solid #3a3a5e;
+    max-height: 90vh; /* Prevent panel from exceeding viewport height */
+    overflow-y: auto; /* Allow scrolling if content is too long */
 }
 #creatureInfoPanel.hidden {
     display: none;
@@ -260,11 +307,13 @@ canvas.simulator {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap; /* Allow text to wrap if long */
 }
 #creatureInfoPanel p span {
     font-weight: normal;
     color: #b0b0b0;
     text-align: right;
+    max-width: 60%; /* Limit width of value span */
 }
 #creatureInfoPanel .color-box {
     width: 20px;
@@ -274,6 +323,7 @@ canvas.simulator {
     display: inline-block;
     vertical-align: middle;
     margin-left: 10px;
+    flex-shrink: 0; /* Prevent shrinking */
 }
 #closeInfoPanelButton {
     background-color: #CF6679;
@@ -313,6 +363,7 @@ canvas.simulator {
 }
 
 /* Health Bar Styles */
+/* These styles are applied by JS dynamically, but here for reference */
 .health-bar-container {
     position: absolute;
     top: -15px; /* Position above creature */
