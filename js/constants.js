@@ -31,9 +31,10 @@ export const SIM_CONFIG = {
 };
 
 export const BIOME_TYPES = [
-    { type: 'grassland', color: '#558B2F', movement_cost_multiplier: 1.0, food_spawn_chance: 0.005, base_adaptation_score: 1.0, description: 'Normal movement, average food.' },
-    { type: 'desert', color: '#FFCC80', movement_cost_multiplier: 1.2, food_spawn_chance: 0.002, base_adaptation_score: 0.8, description: 'Slower movement, less food.' },
-    { type: 'water', color: '#42A5F5', movement_cost_multiplier: 1.5, food_spawn_chance: 0.008, base_adaptation_score: 1.2, description: 'Harder to move, but more food.' },
-    { type: 'forest', color: '#2E7D32', movement_cost_multiplier: 1.1, food_spawn_chance: 0.006, base_adaptation_score: 1.1, description: 'Slightly slower, good food.' },
-    { type: 'mountain', color: '#757575', movement_cost_multiplier: 1.8, food_spawn_chance: 0.001, base_adaptation_score: 0.7, description: 'Very slow movement, sparse food.' },
+    // Updated colors to fit new dark theme
+    { type: 'grassland', color: '#3f6d3f', movement_cost_multiplier: 1.0, food_spawn_chance: 0.005, base_adaptation_score: 1.0, description: 'Normal movement, average food.' },
+    { type: 'desert', color: '#b88b4a', movement_cost_multiplier: 1.2, food_spawn_chance: 0.002, base_adaptation_score: 0.8, description: 'Slower movement, less food.' },
+    { type: 'water', color: '#3a6ea5', movement_cost_multiplier: 1.5, food_spawn_chance: 0.008, base_adaptation_score: 1.2, description: 'Harder to move, but more food.' },
+    { type: 'forest', color: '#2b5a2b', movement_cost_multiplier: 1.1, food_spawn_chance: 0.006, base_adaptation_score: 1.1, description: 'Slightly slower, good food.' },
+    { type: 'mountain', color: '#5e5e5e', movement_cost_multiplier: 1.8, food_spawn_chance: 0.001, base_adaptation_score: 0.7, description: 'Very slow movement, sparse food.' },
 ];
