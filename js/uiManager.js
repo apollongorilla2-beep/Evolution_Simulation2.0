@@ -50,9 +50,9 @@ export const UIManager = {
     toggleHealthBarsButton: document.getElementById('toggleHealthBarsButton'),
 
     brainDisplays: [
-        { container: document.getElementById('brainDisplay1'), title: document.querySelector('#brainDisplay1 h4'), canvas: document.querySelector('#brainDisplay1 .brain-canvas') },
-        { container: document.getElementById('brainDisplay2'), title: document.querySelector('#brainDisplay2 h4'), canvas: document.querySelector('#brainDisplay2 .brain-canvas') },
-        { container: document.getElementById('brainDisplay3'), title: document.querySelector('#brainDisplay3 h4'), canvas: document.querySelector('#brainDisplay3 .brain-canvas') },
+        { container: document.getElementById('brainDisplay1'), title: document.querySelector('#brainDisplay1 h4'), canvas: document.querySelector('#brainDisplay1 .brain-canvas'), brain: null },
+        { container: document.getElementById('brainDisplay2'), title: document.querySelector('#brainDisplay2 h4'), canvas: document.querySelector('#brainDisplay2 .brain-canvas'), brain: null },
+        { container: document.getElementById('brainDisplay3'), title: document.querySelector('#brainDisplay3 h4'), canvas: document.querySelector('#brainDisplay3 .brain-canvas'), brain: null },
     ],
     brainContexts: [],
 
@@ -76,6 +76,9 @@ export const UIManager = {
         this.brainContexts = this.brainDisplays.map(bd => bd.canvas.getContext('2d'));
         if (this.miniMapCanvas) {
             this.miniMapCtx = this.miniMapCanvas.getContext('2d');
+            // Set initial dimensions for minimap canvas based on its container's client dimensions
+            this.miniMapCanvas.width = this.miniMapCanvas.clientWidth;
+            this.miniMapCanvas.height = this.miniMapCanvas.clientHeight;
         }
 
         // Set max for biome preference slider
@@ -88,6 +91,37 @@ export const UIManager = {
             this.closeInfoPanelButton.addEventListener('click', () => {
                 this.hideCreatureInfo();
             });
+        }
+
+        // NEW: Initialize ResizeObserver for each brain display
+        if (typeof ResizeObserver !== 'undefined') {
+            this.brainDisplays.forEach((display, index) => {
+                const resizeObserver = new ResizeObserver(entries => {
+                    for (let entry of entries) {
+                        if (entry.target === display.container) {
+                            const { width, height } = entry.contentRect;
+                            const canvas = display.canvas;
+                            canvas.width = width;
+                            canvas.height = height;
+
+                            // Redraw the neural network if a brain is assigned
+                            if (display.brain) {
+                                // Updated input labels to reflect new NN inputs
+                                const inputLabels = [
+                                    "F Angle", "F Dist", "Energy", "Wall X", "Wall Y",
+                                    "Biome", "Vision", "Crt Angle", "Crt Dist", "Biome Pref",
+                                    "Lifespan", "Diet Type", "Sensory Dist", "Curr Temp", "Hazard"
+                                ];
+                                const outputLabels = ["Turn Rate", "Speed Adj"];
+                                this.drawNeuralNetwork(this.brainContexts[index], display.brain, inputLabels, outputLabels);
+                            }
+                        }
+                    }
+                });
+                resizeObserver.observe(display.container);
+            });
+        } else {
+            console.warn("ResizeObserver is not supported by this browser. Neural network canvases will not dynamically resize.");
         }
     },
 
@@ -173,9 +207,11 @@ export const UIManager = {
      * @param {string[]} outputLabels - Labels for output nodes.
      */
     drawNeuralNetwork(ctx, brain, inputLabels, outputLabels) {
-        if (!ctx) return;
+        if (!ctx || !brain) return; // Added check for brain
 
         // Set canvas dimensions to match its display size for crisp rendering
+        // These are now handled by the ResizeObserver when the parent div is resized,
+        // but we ensure it's set if this function is called directly (e.g., initial draw)
         ctx.canvas.width = ctx.canvas.clientWidth;
         ctx.canvas.height = ctx.canvas.clientHeight;
 
@@ -329,6 +365,13 @@ export const UIManager = {
                 colorBox.style.backgroundColor = creature.originalColor; // Show original color
                 display.title.innerHTML = `Creature ${i + 1} <span class="color-box" style="background-color: ${creature.originalColor};"></span>`;
 
+                // Store the brain reference for the ResizeObserver to use
+                display.brain = creature.brain;
+
+                // Manually set canvas dimensions and redraw for initial display
+                const canvas = display.canvas;
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
                 this.drawNeuralNetwork(this.brainContexts[i], creature.brain, inputLabels, outputLabels);
             } else {
                 const colorBox = display.title.querySelector('.color-box');
@@ -339,6 +382,7 @@ export const UIManager = {
                     this.brainContexts[i].fillStyle = '#2a2a4a';
                     this.brainContexts[i].fillRect(0, 0, display.canvas.width, display.canvas.height);
                 }
+                display.brain = null; // Clear brain reference
             }
         }
     },
@@ -380,8 +424,6 @@ export const UIManager = {
 
     /**
      * Hides the creature information panel.
-     * @param {Creature} creature - The creature to display.
-     * @param {number[][]} biomeMap - The current biome map.
      */
     hideCreatureInfo() {
         if (this.creatureInfoPanel) {
@@ -397,10 +439,7 @@ export const UIManager = {
     drawMiniMap(creatures, biomeMap) {
         if (!this.miniMapCtx) return;
 
-        // Set canvas dimensions to match its display size for crisp rendering
-        this.miniMapCtx.canvas.width = this.miniMapCanvas.clientWidth;
-        this.miniMapCtx.canvas.height = this.miniMapCanvas.clientHeight;
-
+        // The canvas width/height attributes are set once in init() for the fixed-size minimap.
         const mapWidth = this.miniMapCtx.canvas.width;
         const mapHeight = this.miniMapCtx.canvas.height;
         this.miniMapCtx.clearRect(0, 0, mapWidth, mapHeight);
