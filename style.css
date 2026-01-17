@@ -22,39 +22,39 @@ main {
 
 #simulation-wrapper {
     display: flex;
-    justify-content: center; /* Center the three columns */
-    gap: 30px; /* Increased gap between control/canvas/side panels */
+    justify-content: center;
+    gap: 30px;
     width: 100%;
-    max-width: 1400px; /* Max width for the entire simulation + side panels */
-    flex-wrap: wrap; /* Allow wrapping on very small screens, though it's designed for wider screens */
+    max-width: 1400px;
+    flex-wrap: wrap;
 }
 
-.main-canvas-container { /* New: Container for canvas and overlay */
-    position: relative; /* Essential for positioning overlay children */
-    width: 800px; /* Match canvas width */
-    height: 600px; /* Match canvas height */
+.main-canvas-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
     flex-shrink: 0;
 }
 
 canvas.simulator {
-    border: 2px solid #333; /* Softer border */
-    background-color: #2a2a4a; /* Dark blue-purple for canvas */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); /* Add depth */
-    border-radius: 8px; /* Slightly rounded corners */
-    display: block; /* Remove extra space below canvas */
+    border: 2px solid #333;
+    background-color: #2a2a4a;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    display: block;
 }
 
-#simulationStatsOverlay { /* New: Styles for the real-time stats overlay */
+#simulationStatsOverlay {
     position: absolute;
     top: 15px;
     left: 15px;
-    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent dark background */
+    background-color: rgba(0, 0, 0, 0.6);
     padding: 10px 15px;
     border-radius: 5px;
     color: white;
     font-size: 0.9em;
     text-align: left;
-    pointer-events: none; /* Allows clicks to pass through to the canvas */
+    pointer-events: none;
 }
 #simulationStatsOverlay p {
     margin: 3px 0;
@@ -62,102 +62,101 @@ canvas.simulator {
 }
 #simulationStatsOverlay span {
     font-weight: bold;
-    color: #03DAC6; /* Teal for values */
+    color: #03DAC6;
 }
 
 
 #controls, .side-panel {
-    background-color: #252540; /* Darker panel background */
-    padding: 20px; /* Increased padding */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    background-color: #252540;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
 }
 #controls {
-    flex: 0 0 280px; /* Fixed width for controls */
+    flex: 0 0 280px;
     min-width: 280px;
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Increased gap between control groups */
-    overflow-y: auto; /* Keep scrolling for controls if they get too long */
-    max-height: 90vh; /* Keep max-height for controls */
+    gap: 20px;
+    overflow-y: auto;
+    max-height: 90vh;
 }
 
 .control-group {
     border-bottom: 1px solid #3a3a5e;
-    padding-bottom: 20px; /* Increased padding below group */
-    margin-bottom: 0; /* Reset margin, gap handles spacing */
+    padding-bottom: 20px;
+    margin-bottom: 0;
 }
 .control-group:last-child {
     border-bottom: none;
     padding-bottom: 0;
 }
 .control-group h3 {
-    color: #BB86FC; /* Light purple for group titles */
+    color: #BB86FC;
     margin-top: 0;
-    margin-bottom: 15px; /* Increased margin below title */
+    margin-bottom: 15px;
     font-size: 1.1em;
 }
 
 #controls p {
-    margin: 0 0 8px 0; /* Increased margin below paragraphs */
-    color: #b0b0b0; /* Slightly lighter text for status */
+    margin: 0 0 8px 0;
+    color: #b0b0b0;
 }
 #controls span {
     font-weight: bold;
     color: #f0f0f0;
 }
 #controls button, #controls input[type="range"] {
-    margin: 8px 0; /* Increased margin for buttons and sliders */
-    padding: 10px 15px; /* More padding */
+    margin: 8px 0;
+    padding: 10px 15px;
     cursor: pointer;
     border: none;
-    border-radius: 5px; /* Slightly more rounded buttons */
+    border-radius: 5px;
     font-size: 1em;
-    transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transitions */
+    transition: background-color 0.2s ease, transform 0.1s ease;
     width: 100%;
     box-sizing: border-box;
-    color: white; /* Default button text color */
+    color: white;
 }
 #controls button:hover {
-    transform: translateY(-1px); /* Slight lift on hover */
+    transform: translateY(-1px);
 }
 #controls button:active {
-    transform: translateY(0); /* Press effect */
+    transform: translateY(0);
 }
 
-/* Specific button colors */
 #resetButton {
-    background-color: #4CAF50; /* Green for Start/Reset */
+    background-color: #4CAF50;
 }
 #resetButton:hover {
     background-color: #45a049;
 }
 #togglePauseButton {
-    background-color: #FFC107; /* Orange for Pause/Resume */
-    color: #333; /* Dark text for contrast */
+    background-color: #FFC107;
+    color: #333;
 }
 #togglePauseButton:hover {
     background-color: #ffb300;
 }
-#toggleFoodButton, #toggleBiomesButton, #toggleHealthBarsButton { /* Added Health Bars button */
-    background-color: #6200EE; /* Deep purple */
+#toggleFoodButton, #toggleBiomesButton, #toggleHealthBarsButton {
+    background-color: #6200EE;
 }
 #toggleFoodButton:hover, #toggleBiomesButton:hover, #toggleHealthBarsButton:hover {
     background-color: #3700B3;
 }
 
 #resetOptions button {
-    background-color: #03DAC6; /* Teal for generation length */
-    color: #1a1a2e; /* Dark text for contrast */
+    background-color: #03DAC6;
+    color: #1a1a2e;
 }
 #resetOptions button:hover {
     background-color: #018786;
 }
 #resetOptions #majorityMaxAgeButton {
-    background-color: #CF6679; /* Reddish for Majority Max Age */
+    background-color: #CF6679;
     color: white;
 }
 #resetOptions #majorityMaxAgeButton:hover {
@@ -168,30 +167,30 @@ canvas.simulator {
     display: block;
     margin-top: 10px;
     margin-bottom: 5px;
-    font-weight: 600; /* Bolder labels */
+    font-weight: 600;
     color: #e0e0e0;
 }
 #controls .slider-group {
-    margin-bottom: 15px; /* Increased margin for slider groups */
+    margin-bottom: 15px;
 }
 #controls input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    background: #3a3a5e; /* Darker track */
+    background: #3a3a5e;
     outline: none;
-    height: 8px; /* Thicker track */
+    height: 8px;
     border-radius: 5px;
 }
 #controls input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px; /* Larger thumb */
+    width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #03DAC6; /* Teal thumb */
+    background: #03DAC6;
     cursor: grab;
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    margin-top: -5px; /* Center thumb vertically */
+    margin-top: -5px;
 }
 #controls input[type="range"]::-moz-range-thumb {
     width: 18px;
@@ -207,73 +206,69 @@ canvas.simulator {
 }
 
 #resetOptions {
-    border-top: none; /* Already handled by control-group border */
+    border-top: none;
     padding-top: 0;
     margin-top: 0;
 }
-#resetOptions h3 { /* Changed from h4 to h3 for consistency */
+#resetOptions h3 {
     color: #f0f0f0;
     margin-top: 0;
     margin-bottom: 10px;
 }
 
 .side-panel {
-    flex: 0 0 350px; /* Fixed width for side panel */
+    flex: 0 0 350px;
     min-width: 350px;
     padding: 20px;
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
-    display: flex; /* Make side-panel a flex container */
-    flex-direction: column; /* Stack its children vertically */
-    gap: 20px; /* Gap between brain displays */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     
-    /* NEW: Explicit height for the side panel */
     height: 600px; /* Set a fixed height matching the simulation canvas */
-    max-height: 90vh; /* Limits the overall height of the side panel */
-    overflow-y: auto; /* Provides a scrollbar for the side panel if its content overflows */
+    max-height: 90vh;
+    overflow-y: auto;
 }
 .side-panel h2 {
     text-align: center;
     margin-top: 0;
-    margin-bottom: 5px; /* Reduced margin to allow more space for content */
-    color: #BB86FC; /* Light purple for side panel title */
+    margin-bottom: 5px;
+    color: #BB86FC;
     font-size: 1.5em;
 }
 .creature-brain-display {
-    background-color: #3a3a5e; /* Darker background for brain displays */
+    background-color: #3a3a5e;
     padding: 15px;
     border-radius: 8px;
     text-align: center;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
     
-    /* NEW: Use flex: none to prevent automatic growing/shrinking */
     flex: none; /* flex-grow: 0; flex-shrink: 0; flex-basis: auto; */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    box-sizing: border-box;
     
-    /* Set a default height to prevent stretching, overridden by manual resize */
-    height: 250px; /* Adjust this value as needed for a good default visual size */
+    height: 250px;
     
-    display: flex; /* Make it a flex container for its children */
+    display: flex;
     flex-direction: column;
 
-    /* Resizable properties */
-    resize: both; /* Allow resizing in both directions */
-    overflow: hidden; /* Hide any content that overflows the div */
-    min-width: 200px; /* Prevent it from becoming too small */
-    min-height: 150px; /* Prevent it from becoming too small */
+    resize: both;
+    overflow: hidden;
+    min-width: 200px;
+    min-height: 150px;
 }
 .creature-brain-display h4 {
-    margin: 0 0 12px 0; /* Margin below h4 */
+    margin: 0 0 12px 0;
     color: #e0e0e0;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     font-size: 1.1em;
-    flex-shrink: 0; /* Prevent h4 from shrinking */
+    flex-shrink: 0;
 }
 .creature-brain-display .color-box {
     width: 20px;
@@ -284,10 +279,9 @@ canvas.simulator {
     vertical-align: middle;
 }
 .brain-canvas {
-    /* These will be set by JavaScript dynamically to match the parent div's size. */
     background-color: #2a2a4a;
     border: 1px solid #555;
-    margin-top: 0; /* Reset margin-top */
+    margin-top: 0;
     border-radius: 4px;
     display: block;
     width: 100%;
@@ -393,18 +387,18 @@ canvas.simulator {
 
 /* Mini-map */
 .mini-map-container {
-    margin-top: 30px; /* Add margin to separate from simulation wrapper */
+    margin-top: 30px;
     background-color: #3a3a5e;
     padding: 20px;
     border-radius: 8px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center content horizontally */
-    width: 400px; /* Fixed width for the container */
-    height: 300px; /* Fixed height for the container */
-    flex-shrink: 0; /* Prevent it from shrinking */
-    flex-grow: 0; /* Prevent it from growing */
+    align-items: center;
+    width: 400px;
+    height: 300px;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 .mini-map-container h3 {
     color: #03DAC6;
@@ -414,8 +408,8 @@ canvas.simulator {
     flex-shrink: 0;
 }
 #miniMapCanvas {
-    width: 100%; /* Fill parent's width */
-    height: 100%; /* Fill parent's height */
+    width: 100%;
+    height: 100%;
     border: 1px solid #555;
     background-color: #2a2a4a;
     display: block;
