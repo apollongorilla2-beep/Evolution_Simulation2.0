@@ -46,9 +46,40 @@
                     <label for="initialBiomePreferenceSlider">Initial Biome Preference: <span id="initialBiomePreferenceValue">0</span></label>
                     <input type="range" id="initialBiomePreferenceSlider" min="0" max="4" value="0" step="1">
                 </div>
+                <!-- New Sliders for new genetic traits -->
+                <div class="slider-group">
+                    <label for="initialDietTypeSlider">Initial Diet (0=Herb, 1=Carn): <span id="initialDietTypeValue">0</span></label>
+                    <input type="range" id="initialDietTypeSlider" min="0" max="1" value="0" step="1">
+                </div>
+                <div class="slider-group">
+                    <label for="initialAttackPowerSlider">Initial Attack: <span id="initialAttackPowerValue">10</span></label>
+                    <input type="range" id="initialAttackPowerSlider" min="1" max="50" value="10" step="1">
+                </div>
+                <div class="slider-group">
+                    <label for="initialDefenseSlider">Initial Defense: <span id="initialDefenseValue">5</span></label>
+                    <input type="range" id="initialDefenseSlider" min="0" max="30" value="5" step="1">
+                </div>
+                <div class="slider-group">
+                    <label for="initialMetabolismSlider">Initial Metabolism: <span id="initialMetabolismValue">0.03</span></label>
+                    <input type="range" id="initialMetabolismSlider" min="0.01" max="0.1" value="0.03" step="0.01">
+                </div>
+                <div class="slider-group">
+                    <label for="initialReproductionCooldownSlider">Initial Repro Cooldown: <span id="initialReproductionCooldownValue">60</span>f</label>
+                    <input type="range" id="initialReproductionCooldownSlider" min="30" max="300" value="60" step="10">
+                </div>
+                <div class="slider-group">
+                    <label for="initialClutchSizeSlider">Initial Clutch Size: <span id="initialClutchSizeValue">2</span></label>
+                    <input type="range" id="initialClutchSizeSlider" min="1" max="5" value="2" step="1">
+                </div>
+                <div class="slider-group">
+                    <label for="initialScentHearingRangeSlider">Initial Sensory Range: <span id="initialScentHearingRangeValue">50</span>px</label>
+                    <input type="range" id="initialScentHearingRangeSlider" min="0" max="150" value="50" step="10">
+                </div>
+
 
                 <button id="toggleFoodButton">Toggle Food Visibility</button>
                 <button id="toggleBiomesButton">Toggle Biome Visibility</button>
+                <button id="toggleHealthBarsButton">Toggle Health Bars</button>
 
                 <div id="resetOptions">
                     <h4>Set Generation Length:</h4>
@@ -61,6 +92,30 @@
             </div>
 
             <canvas id="evolutionCanvas" class="simulator" width="800" height="600"></canvas>
+
+            <div id="creatureInfoPanel" class="hidden">
+                <h3>Creature Details</h3>
+                <p>ID: <span id="infoCreatureId"></span></p>
+                <p>Status: <span id="infoCreatureStatus"></span></p>
+                <p>Age: <span id="infoCreatureAge"></span> / <span id="infoCreatureLifespan"></span> (frames)</p>
+                <p>Energy: <span id="infoCreatureEnergy"></span></p>
+                <p>Food Eaten: <span id="infoCreatureFoodEaten"></span></p>
+                <p>Color: <span id="infoCreatureColor" class="color-box"></span></p>
+                <h4>Genetic Traits:</h4>
+                <p>Speed: <span id="infoCreatureSpeed"></span></p>
+                <p>Size: <span id="infoCreatureSize"></span></p>
+                <p>Vision Range: <span id="infoCreatureVision"></span>px</p>
+                <p>Biome Preference: <span id="infoCreatureBiomePref"></span></p>
+                <p>Diet Type: <span id="infoCreatureDiet"></span></p>
+                <p>Attack Power: <span id="infoCreatureAttack"></span></p>
+                <p>Defense: <span id="infoCreatureDefense"></span></p>
+                <p>Metabolism: <span id="infoCreatureMetabolism"></span></p>
+                <p>Repro Cooldown: <span id="infoCreatureReproCooldown"></span>f</p>
+                <p>Clutch Size: <span id="infoCreatureClutchSize"></span></p>
+                <p>Sensory Range: <span id="infoCreatureSensoryRange"></span>px</p>
+                <p>Optimal Temp: <span id="infoCreatureOptimalTemp"></span></p>
+                <button id="closeInfoPanelButton">Close</button>
+            </div>
 
             <div class="chart-container">
                 <h3>Average Fitness Over Generations</h3>
@@ -96,6 +151,31 @@
                 <h3>Average Biome Preference Over Generations</h3>
                 <canvas id="biomePreferenceChart"></canvas>
             </div>
+            <!-- New Charts for new traits -->
+            <div class="chart-container">
+                <h3>Average Attack Power Over Generations</h3>
+                <canvas id="attackPowerChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Defense Over Generations</h3>
+                <canvas id="defenseChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Metabolism Rate Over Generations</h3>
+                <canvas id="metabolismChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Clutch Size Over Generations</h3>
+                <canvas id="clutchSizeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Sensory Range Over Generations</h3>
+                <canvas id="sensoryRangeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Optimal Temperature Over Generations</h3>
+                <canvas id="optimalTemperatureChart"></canvas>
+            </div>
         </div>
 
         <div class="side-panel">
@@ -111,6 +191,12 @@
             <div id="brainDisplay3" class="creature-brain-display">
                 <h4>Creature 3 <span class="color-box" style="background-color: gray;"></span></h4>
                 <canvas class="brain-canvas" width="300" height="200"></canvas>
+            </div>
+
+            <!-- Mini-map -->
+            <div class="mini-map-container">
+                <h3>Mini-Map</h3>
+                <canvas id="miniMapCanvas" width="300" height="225"></canvas>
             </div>
         </div>
     </main>
