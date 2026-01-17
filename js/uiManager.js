@@ -29,8 +29,28 @@ export const UIManager = {
     visionRangeValue: document.getElementById('visionRangeValue'),
     initialBiomePreferenceSlider: document.getElementById('initialBiomePreferenceSlider'), // New slider
     initialBiomePreferenceValue: document.getElementById('initialBiomePreferenceValue'),   // New span
+
+    // New slider elements
+    initialDietTypeSlider: document.getElementById('initialDietTypeSlider'),
+    initialDietTypeValue: document.getElementById('initialDietTypeValue'),
+    initialAttackPowerSlider: document.getElementById('initialAttackPowerSlider'),
+    initialAttackPowerValue: document.getElementById('initialAttackPowerValue'),
+    initialDefenseSlider: document.getElementById('initialDefenseSlider'),
+    initialDefenseValue: document.getElementById('initialDefenseValue'),
+    initialMetabolismSlider: document.getElementById('initialMetabolismSlider'),
+    initialMetabolismValue: document.getElementById('initialMetabolismValue'),
+    initialReproductionCooldownSlider: document.getElementById('initialReproductionCooldownSlider'),
+    initialReproductionCooldownValue: document.getElementById('initialReproductionCooldownValue'),
+    initialClutchSizeSlider: document.getElementById('initialClutchSizeSlider'),
+    initialClutchSizeValue: document.getElementById('initialClutchSizeValue'),
+    initialScentHearingRangeSlider: document.getElementById('initialScentHearingRangeSlider'),
+    initialScentHearingRangeValue: document.getElementById('initialScentHearingRangeValue'),
+    // Note: Optimal Temperature slider is not added to UI, it's an internal trait for now.
+
     toggleFoodButton: document.getElementById('toggleFoodButton'),
     toggleBiomesButton: document.getElementById('toggleBiomesButton'),
+    toggleHealthBarsButton: document.getElementById('toggleHealthBarsButton'), // New button
+
     brainDisplays: [
         { container: document.getElementById('brainDisplay1'), title: document.querySelector('#brainDisplay1 h4'), canvas: document.querySelector('#brainDisplay1 .brain-canvas') },
         { container: document.getElementById('brainDisplay2'), title: document.querySelector('#brainDisplay2 h4'), canvas: document.querySelector('#brainDisplay2 .brain-canvas') },
@@ -38,14 +58,31 @@ export const UIManager = {
     ],
     brainContexts: [],
 
+    creatureInfoPanel: document.getElementById('creatureInfoPanel'), // New info panel
+    closeInfoPanelButton: document.getElementById('closeInfoPanelButton'), // New close button for panel
+
+    miniMapCanvas: document.getElementById('miniMapCanvas'), // New mini-map canvas
+    miniMapCtx: null,
+
     /**
      * Initializes the UI elements and their contexts.
      */
     init() {
         this.brainContexts = this.brainDisplays.map(bd => bd.canvas.getContext('2d'));
+        if (this.miniMapCanvas) {
+            this.miniMapCtx = this.miniMapCanvas.getContext('2d');
+        }
+
         // Set max for biome preference slider
         if (this.initialBiomePreferenceSlider) {
             this.initialBiomePreferenceSlider.max = BIOME_TYPES.length - 1;
+        }
+
+        // Attach event listener for closing info panel
+        if (this.closeInfoPanelButton) {
+            this.closeInfoPanelButton.addEventListener('click', () => {
+                this.hideCreatureInfo();
+            });
         }
     },
 
@@ -54,7 +91,7 @@ export const UIManager = {
      * @param {number} count - The current generation number.
      */
     updateGenerationCount(count) {
-        this.generationCountSpan.textContent = count;
+        if (this.generationCountSpan) this.generationCountSpan.textContent = count;
     },
 
     /**
@@ -62,7 +99,7 @@ export const UIManager = {
      * @param {number} count - The number of alive creatures.
      */
     updatePopulationCount(count) {
-        this.populationCountSpan.textContent = count;
+        if (this.populationCountSpan) this.populationCountSpan.textContent = count;
     },
 
     /**
@@ -70,7 +107,7 @@ export const UIManager = {
      * @param {number} progress - The progress percentage (0-100).
      */
     updateGenerationProgress(progress) {
-        this.generationProgressSpan.textContent = `${progress}%`;
+        if (this.generationProgressSpan) this.generationProgressSpan.textContent = `${progress}%`;
     },
 
     /**
@@ -78,7 +115,7 @@ export const UIManager = {
      * @param {string} modeText - Text describing the current reset mode.
      */
     updateResetMode(modeText) {
-        this.resetModeSpan.textContent = modeText;
+        if (this.resetModeSpan) this.resetModeSpan.textContent = modeText;
     },
 
     /**
@@ -88,7 +125,7 @@ export const UIManager = {
      * @param {string} [suffix=''] - Optional suffix for the value (e.g., 'FPS', 's').
      */
     updateSliderValue(valueSpan, value, suffix = '') {
-        valueSpan.textContent = value + suffix;
+        if (valueSpan) valueSpan.textContent = value + suffix;
     },
 
     /**
@@ -203,7 +240,11 @@ export const UIManager = {
         const sortedCreaturesForDisplay = [...creatures].sort((a, b) => b.foodEatenCount - a.foodEatenCount);
 
         // Updated input labels to reflect new NN inputs
-        const inputLabels = ["F Angle", "F Dist", "Energy", "Wall X", "Wall Y", "Biome", "Vision", "Crt Angle", "Crt Dist", "Biome Pref", "Lifespan"];
+        const inputLabels = [
+            "F Angle", "F Dist", "Energy", "Wall X", "Wall Y",
+            "Biome", "Vision", "Crt Angle", "Crt Dist", "Biome Pref",
+            "Lifespan", "Diet Type", "Sensory Dist", "Curr Temp", "Hazard"
+        ];
         const outputLabels = ["Turn Rate", "Speed Adj"];
 
         for (let i = 0; i < 3; i++) {
@@ -225,6 +266,88 @@ export const UIManager = {
                     this.brainContexts[i].fillStyle = '#2a2a4a';
                     this.brainContexts[i].fillRect(0, 0, display.canvas.width, display.canvas.height);
                 }
+            }
+        }
+    },
+
+    /**
+     * New: Displays detailed information about a clicked creature.
+     * @param {Creature} creature - The creature to display.
+     * @param {number[][]} biomeMap - The current biome map.
+     */
+    showCreatureInfo(creature, biomeMap) {
+        if (!this.creatureInfoPanel) return;
+
+        // Populate basic info
+        document.getElementById('infoCreatureId').textContent = creature.id;
+        document.getElementById('infoCreatureStatus').textContent = creature.isAlive ? 'Alive' : 'Dead';
+        document.getElementById('infoCreatureAge').textContent = Math.round(creature.age);
+        document.getElementById('infoCreatureLifespan').textContent = Math.round(creature.lifespan);
+        document.getElementById('infoCreatureEnergy').textContent = Math.round(creature.energy);
+        document.getElementById('infoCreatureFoodEaten').textContent = creature.foodEatenCount;
+        document.getElementById('infoCreatureColor').style.backgroundColor = creature.originalColor;
+
+        // Populate genetic traits
+        document.getElementById('infoCreatureSpeed').textContent = creature.speed.toFixed(2);
+        document.getElementById('infoCreatureSize').textContent = creature.size.toFixed(2);
+        document.getElementById('infoCreatureVision').textContent = Math.round(creature.visionRange);
+        document.getElementById('infoCreatureBiomePref').textContent = BIOME_TYPES[creature.biomePreference].type;
+        document.getElementById('infoCreatureDiet').textContent = creature.dietType === 0 ? 'Herbivore' : 'Carnivore';
+        document.getElementById('infoCreatureAttack').textContent = creature.attackPower.toFixed(1);
+        document.getElementById('infoCreatureDefense').textContent = creature.defense.toFixed(1);
+        document.getElementById('infoCreatureMetabolism').textContent = creature.metabolismRate.toFixed(3);
+        document.getElementById('infoCreatureReproCooldown').textContent = Math.round(creature.reproductionCooldown);
+        document.getElementById('infoCreatureClutchSize').textContent = creature.clutchSize;
+        document.getElementById('infoCreatureSensoryRange').textContent = Math.round(creature.sensoryRange);
+        document.getElementById('infoCreatureOptimalTemp').textContent = creature.optimalTemperature.toFixed(2);
+
+
+        this.creatureInfoPanel.classList.remove('hidden');
+    },
+
+    /**
+     * New: Hides the creature information panel.
+     */
+    hideCreatureInfo() {
+        if (this.creatureInfoPanel) {
+            this.creatureInfoPanel.classList.add('hidden');
+        }
+    },
+
+    /**
+     * New: Draws the mini-map.
+     * @param {Creature[]} creatures - Array of all creatures.
+     * @param {number[][]} biomeMap - The biome map.
+     */
+    drawMiniMap(creatures, biomeMap) {
+        if (!this.miniMapCtx) return;
+
+        const mapWidth = this.miniMapCanvas.width;
+        const mapHeight = this.miniMapCanvas.height;
+        this.miniMapCtx.clearRect(0, 0, mapWidth, mapHeight);
+
+        // Scale factors
+        const scaleX = mapWidth / SIM_CONFIG.WORLD_WIDTH;
+        const scaleY = mapHeight / SIM_CONFIG.WORLD_HEIGHT;
+
+        // Draw biomes on mini-map
+        const cellWidth = mapWidth / SIM_CONFIG.BIOME_GRID_X;
+        const cellHeight = mapHeight / SIM_CONFIG.BIOME_GRID_Y;
+        for (let y = 0; y < SIM_CONFIG.BIOME_GRID_Y; y++) {
+            for (let x = 0; x < SIM_CONFIG.BIOME_GRID_X; x++) {
+                const biomeType = BIOME_TYPES[biomeMap[y][x]];
+                this.miniMapCtx.fillStyle = biomeType.color;
+                this.miniMapCtx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+            }
+        }
+
+        // Draw creatures on mini-map
+        for (const creature of creatures) {
+            if (creature.isAlive) {
+                this.miniMapCtx.beginPath();
+                this.miniMapCtx.arc(creature.x * scaleX, creature.y * scaleY, 2, 0, Math.PI * 2); // Small dot for creature
+                this.miniMapCtx.fillStyle = creature.originalColor;
+                this.miniMapCtx.fill();
             }
         }
     }
