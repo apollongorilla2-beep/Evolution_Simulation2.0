@@ -1,5 +1,6 @@
-import { SIM_CONFIG } from './constants.js';
+import { SIM_CONFIG, BIOME_TYPES } from './constants.js'; // Import BIOME_TYPES
 import { clamp } from './utils.js';
+import { NeuralNetwork } from './neuralNetwork.js'; // Import NeuralNetwork for type hinting
 
 export const UIManager = {
     // UI Elements
@@ -8,7 +9,7 @@ export const UIManager = {
     generationProgressSpan: document.getElementById('generationProgress'),
     resetModeSpan: document.getElementById('resetMode'),
     resetButton: document.getElementById('resetButton'),
-    togglePauseButton: document.getElementById('togglePauseButton'), // New pause button
+    togglePauseButton: document.getElementById('togglePauseButton'),
     majorityMaxAgeButton: document.getElementById('majorityMaxAgeButton'),
     reset1sButton: document.getElementById('reset1sButton'),
     reset3sButton: document.getElementById('reset3sButton'),
@@ -22,10 +23,12 @@ export const UIManager = {
     mutationStrengthValue: document.getElementById('mutationStrengthValue'),
     foodCountSlider: document.getElementById('foodCountSlider'),
     foodCountValue: document.getElementById('foodCountValue'),
-    maxAgeSlider: document.getElementById('maxAgeSlider'),
-    maxAgeValue: document.getElementById('maxAgeValue'),
+    initialLifespanSlider: document.getElementById('initialLifespanSlider'), // New slider
+    initialLifespanValue: document.getElementById('initialLifespanValue'),   // New span
     visionRangeSlider: document.getElementById('visionRangeSlider'),
     visionRangeValue: document.getElementById('visionRangeValue'),
+    initialBiomePreferenceSlider: document.getElementById('initialBiomePreferenceSlider'), // New slider
+    initialBiomePreferenceValue: document.getElementById('initialBiomePreferenceValue'),   // New span
     toggleFoodButton: document.getElementById('toggleFoodButton'),
     toggleBiomesButton: document.getElementById('toggleBiomesButton'),
     brainDisplays: [
@@ -40,6 +43,10 @@ export const UIManager = {
      */
     init() {
         this.brainContexts = this.brainDisplays.map(bd => bd.canvas.getContext('2d'));
+        // Set max for biome preference slider
+        if (this.initialBiomePreferenceSlider) {
+            this.initialBiomePreferenceSlider.max = BIOME_TYPES.length - 1;
+        }
     },
 
     /**
@@ -195,7 +202,8 @@ export const UIManager = {
         // Sort creatures by current food eaten count for display
         const sortedCreaturesForDisplay = [...creatures].sort((a, b) => b.foodEatenCount - a.foodEatenCount);
 
-        const inputLabels = ["F Angle", "F Dist", "Energy", "Wall X", "Wall Y", "Biome", "Vision"];
+        // Updated input labels to reflect new NN inputs
+        const inputLabels = ["F Angle", "F Dist", "Energy", "Wall X", "Wall Y", "Biome", "Vision", "Crt Angle", "Crt Dist", "Biome Pref", "Lifespan"];
         const outputLabels = ["Turn Rate", "Speed Adj"];
 
         for (let i = 0; i < 3; i++) {
