@@ -74,7 +74,6 @@ canvas.simulator {
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
-    /* Removed overflow-y: auto and max-height from .side-panel */
 }
 #controls {
     flex: 0 0 280px; /* Fixed width for controls */
@@ -227,10 +226,13 @@ canvas.simulator {
     font-size: 0.95em;
     text-align: center;
     box-sizing: border-box;
-    /* Removed overflow-y: auto; and max-height: 90vh; */
     display: flex; /* Make side-panel a flex container */
     flex-direction: column; /* Stack its children vertically */
     gap: 20px; /* Gap between brain displays */
+    
+    /* Re-added constraints for the side-panel itself */
+    max-height: 90vh; /* Limits the overall height of the side panel */
+    overflow-y: auto; /* Provides a scrollbar for the side panel if its content overflows */
 }
 .side-panel h2 {
     text-align: center;
@@ -245,11 +247,14 @@ canvas.simulator {
     border-radius: 8px;
     text-align: center;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
-    flex-grow: 1; /* Allow to grow and shrink vertically */
+    
+    /* NEW: Set a default height to prevent stretching */
+    height: 250px; /* Adjust this value as needed for a good default visual size */
+    
     display: flex; /* Make it a flex container for its children */
     flex-direction: column;
 
-    /* NEW: Resizable properties */
+    /* Resizable properties */
     resize: both; /* Allow resizing in both directions */
     overflow: auto; /* Essential for resize to work for its own content */
     min-width: 200px; /* Prevent it from becoming too small */
@@ -367,8 +372,6 @@ canvas.simulator {
     border-radius: 4px;
     display: inline-block;
     vertical-align: middle;
-    margin-left: 10px;
-    flex-shrink: 0;
 }
 #closeInfoPanelButton {
     background-color: #CF6679;
