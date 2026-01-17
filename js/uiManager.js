@@ -175,6 +175,10 @@ export const UIManager = {
     drawNeuralNetwork(ctx, brain, inputLabels, outputLabels) {
         if (!ctx) return;
 
+        // Set canvas dimensions to match its display size for crisp rendering
+        ctx.canvas.width = ctx.canvas.clientWidth;
+        ctx.canvas.height = ctx.canvas.clientHeight;
+
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -184,21 +188,25 @@ export const UIManager = {
         const nodeRadius = 6; // Slightly smaller nodes for more space
         const horizontalSpacing = canvasWidth / 4;
 
-        // Increased vertical spacing to prevent overlap
-        const inputYStep = canvasHeight / (brain.inputNodes + 2); // +2 for top/bottom margin
-        const hiddenYStep = canvasHeight / (brain.hiddenNodes + 2);
-        const outputYStep = canvasHeight / (brain.outputNodes + 2);
+        const inputNodes = brain.inputNodes;
+        const hiddenNodes = brain.hiddenNodes;
+        const outputNodes = brain.outputNodes;
+
+        // Adjust vertical spacing based on actual canvas height and number of nodes
+        const inputYStep = canvasHeight / (inputNodes + 2); // +2 for top/bottom margin
+        const hiddenYStep = canvasHeight / (hiddenNodes + 2);
+        const outputYStep = canvasHeight / (outputNodes + 2);
 
         const nodes = { input: [], hidden: [], output: [] };
 
         // Draw input nodes
-        for (let i = 0; i < brain.inputNodes; i++) {
+        for (let i = 0; i < inputNodes; i++) {
             const x = horizontalSpacing;
             const y = (i + 1.5) * inputYStep; // Adjusted y for better centering
             nodes.input.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = '#BB86FC'; /* Light purple for input nodes */
+            ctx.fillStyle = '#BB86FC';
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
@@ -209,26 +217,26 @@ export const UIManager = {
         }
 
         // Draw hidden nodes
-        for (let i = 0; i < brain.hiddenNodes; i++) {
+        for (let i = 0; i < hiddenNodes; i++) {
             const x = horizontalSpacing * 2;
             const y = (i + 1.5) * hiddenYStep; // Adjusted y for better centering
             nodes.hidden.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = '#03DAC6'; /* Teal for hidden nodes */
+            ctx.fillStyle = '#03DAC6';
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
         }
 
         // Draw output nodes
-        for (let i = 0; i < brain.outputNodes; i++) {
+        for (let i = 0; i < outputNodes; i++) {
             const x = horizontalSpacing * 3;
             const y = (i + 1.5) * outputYStep; // Adjusted y for better centering
             nodes.output.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFC107'; /* Orange for output nodes */
+            ctx.fillStyle = '#FFC107';
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
@@ -239,8 +247,8 @@ export const UIManager = {
         }
 
         // Draw connections (weights) from input to hidden layer
-        for (let i = 0; i < brain.inputNodes; i++) {
-            for (let j = 0; j < brain.hiddenNodes; j++) {
+        for (let i = 0; i < inputNodes; i++) {
+            for (let j = 0; j < hiddenNodes; j++) {
                 const weight = brain.weights_ih[i][j];
                 ctx.beginPath();
                 ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
@@ -253,8 +261,8 @@ export const UIManager = {
         }
 
         // Draw connections (weights) from hidden to output layer
-        for (let i = 0; i < brain.hiddenNodes; i++) {
-            for (let j = 0; j < brain.outputNodes; j++) {
+        for (let i = 0; i < hiddenNodes; i++) {
+            for (let j = 0; j < outputNodes; j++) {
                 const weight = brain.weights_ho[i][j];
                 ctx.beginPath();
                 ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
@@ -358,8 +366,12 @@ export const UIManager = {
     drawMiniMap(creatures, biomeMap) {
         if (!this.miniMapCtx) return;
 
-        const mapWidth = this.miniMapCanvas.width;
-        const mapHeight = this.miniMapCanvas.height;
+        // Set canvas dimensions to match its display size for crisp rendering
+        this.miniMapCtx.canvas.width = this.miniMapCanvas.clientWidth;
+        this.miniMapCtx.canvas.height = this.miniMapCanvas.clientHeight;
+
+        const mapWidth = this.miniMapCtx.canvas.width;
+        const mapHeight = this.miniMapCtx.canvas.height;
         this.miniMapCtx.clearRect(0, 0, mapWidth, mapHeight);
 
         // Scale factors
