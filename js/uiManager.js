@@ -44,6 +44,8 @@ export const UIManager = {
     initialClutchSizeValue: document.getElementById('initialClutchSizeValue'),
     initialScentHearingRangeSlider: document.getElementById('initialScentHearingRangeSlider'),
     initialScentHearingRangeValue: document.getElementById('initialScentHearingRangeValue'),
+    initialArmorSlider: document.getElementById('initialArmorSlider'), // NEW: Armor slider
+    initialArmorValue: document.getElementById('initialArmorValue'), // NEW: Armor value display
 
     toggleFoodButton: document.getElementById('toggleFoodButton'),
     toggleBiomesButton: document.getElementById('toggleBiomesButton'),
@@ -439,7 +441,7 @@ export const UIManager = {
 
                 // Store the brain reference for the ResizeObserver to use
                 display.brain = creature.brain;
-                console.log(`updateBrainDisplays: Display ${i + 1} assigned brain with ID: ${creature.brain.id || 'N/A'}`); // Debug
+                console.log(`updateBrainDisplays: Display ${i + 1} assigned brain with ID: ${creature.id || 'N/A'}, Hidden Nodes: ${creature.brain.hiddenNodes}`); // Debug
 
                 // Manually set canvas dimensions and redraw to match current container size
                 const canvas = display.canvas;
