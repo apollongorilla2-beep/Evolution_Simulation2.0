@@ -3,7 +3,7 @@ import { clamp } from './utils.js';
 import { NeuralNetwork } from './neuralNetwork.js'; // Import NeuralNetwork for type hinting
 
 export const UIManager = {
-    // UI Elements
+    // UI Elements for main control panel
     generationCountSpan: document.getElementById('generationCount'),
     populationCountSpan: document.getElementById('populationCount'),
     generationProgressSpan: document.getElementById('generationProgress'),
@@ -23,14 +23,13 @@ export const UIManager = {
     mutationStrengthValue: document.getElementById('mutationStrengthValue'),
     foodCountSlider: document.getElementById('foodCountSlider'),
     foodCountValue: document.getElementById('foodCountValue'),
-    initialLifespanSlider: document.getElementById('initialLifespanSlider'), // New slider
-    initialLifespanValue: document.getElementById('initialLifespanValue'),   // New span
+    initialLifespanSlider: document.getElementById('initialLifespanSlider'),
+    initialLifespanValue: document.getElementById('initialLifespanValue'),
     visionRangeSlider: document.getElementById('visionRangeSlider'),
     visionRangeValue: document.getElementById('visionRangeValue'),
-    initialBiomePreferenceSlider: document.getElementById('initialBiomePreferenceSlider'), // New slider
-    initialBiomePreferenceValue: document.getElementById('initialBiomePreferenceValue'),   // New span
+    initialBiomePreferenceSlider: document.getElementById('initialBiomePreferenceSlider'),
+    initialBiomePreferenceValue: document.getElementById('initialBiomePreferenceValue'),
 
-    // New slider elements
     initialDietTypeSlider: document.getElementById('initialDietTypeSlider'),
     initialDietTypeValue: document.getElementById('initialDietTypeValue'),
     initialAttackPowerSlider: document.getElementById('initialAttackPowerSlider'),
@@ -45,11 +44,10 @@ export const UIManager = {
     initialClutchSizeValue: document.getElementById('initialClutchSizeValue'),
     initialScentHearingRangeSlider: document.getElementById('initialScentHearingRangeSlider'),
     initialScentHearingRangeValue: document.getElementById('initialScentHearingRangeValue'),
-    // Note: Optimal Temperature slider is not added to UI, it's an internal trait for now.
 
     toggleFoodButton: document.getElementById('toggleFoodButton'),
     toggleBiomesButton: document.getElementById('toggleBiomesButton'),
-    toggleHealthBarsButton: document.getElementById('toggleHealthBarsButton'), // New button
+    toggleHealthBarsButton: document.getElementById('toggleHealthBarsButton'),
 
     brainDisplays: [
         { container: document.getElementById('brainDisplay1'), title: document.querySelector('#brainDisplay1 h4'), canvas: document.querySelector('#brainDisplay1 .brain-canvas') },
@@ -58,10 +56,10 @@ export const UIManager = {
     ],
     brainContexts: [],
 
-    creatureInfoPanel: document.getElementById('creatureInfoPanel'), // New info panel
-    closeInfoPanelButton: document.getElementById('closeInfoPanelButton'), // New close button for panel
+    creatureInfoPanel: document.getElementById('creatureInfoPanel'),
+    closeInfoPanelButton: document.getElementById('closeInfoPanelButton'),
 
-    miniMapCanvas: document.getElementById('miniMapCanvas'), // New mini-map canvas
+    miniMapCanvas: document.getElementById('miniMapCanvas'),
     miniMapCtx: null,
 
     // New: Overlay stats elements
@@ -94,37 +92,58 @@ export const UIManager = {
     },
 
     /**
-     * Updates the generation count displayed in the UI.
+     * Updates the generation count displayed in the main control panel.
      * @param {number} count - The current generation number.
      */
     updateGenerationCount(count) {
         if (this.generationCountSpan) this.generationCountSpan.textContent = count;
-        if (this.overlayGenerationCount) this.overlayGenerationCount.textContent = count; // Update overlay
     },
 
     /**
-     * Updates the alive population count displayed in the UI.
+     * Updates the alive population count displayed in the main control panel.
      * @param {number} count - The number of alive creatures.
      */
     updatePopulationCount(count) {
         if (this.populationCountSpan) this.populationCountSpan.textContent = count;
-        if (this.overlayPopulationCount) this.overlayPopulationCount.textContent = count; // Update overlay
     },
 
     /**
-     * Updates the generation progress displayed in the UI.
+     * Updates the generation progress displayed in the main control panel.
      * @param {number} progress - The progress percentage (0-100).
      */
     updateGenerationProgress(progress) {
         if (this.generationProgressSpan) this.generationProgressSpan.textContent = `${progress}%`;
-        if (this.overlayGenerationProgress) this.overlayGenerationProgress.textContent = `${progress}%`; // Update overlay
     },
 
     /**
-     * New: Updates the current world temperature in the overlay.
+     * Updates the generation count displayed in the overlay.
+     * @param {number} count - The current generation number.
+     */
+    updateOverlayGenerationCount(count) {
+        if (this.overlayGenerationCount) this.overlayGenerationCount.textContent = count;
+    },
+
+    /**
+     * Updates the alive population count displayed in the overlay.
+     * @param {number} count - The number of alive creatures.
+     */
+    updateOverlayPopulationCount(count) {
+        if (this.overlayPopulationCount) this.overlayPopulationCount.textContent = count;
+    },
+
+    /**
+     * Updates the generation progress displayed in the overlay.
+     * @param {number} progress - The progress percentage (0-100).
+     */
+    updateOverlayGenerationProgress(progress) {
+        if (this.overlayGenerationProgress) this.overlayGenerationProgress.textContent = `${progress}%`;
+    },
+
+    /**
+     * Updates the current world temperature in the overlay.
      * @param {number} temperature - The normalized current world temperature.
      */
-    updateCurrentTemperature(temperature) {
+    updateOverlayCurrentTemperature(temperature) {
         if (this.overlayCurrentTemperature) this.overlayCurrentTemperature.textContent = temperature.toFixed(2);
     },
 
