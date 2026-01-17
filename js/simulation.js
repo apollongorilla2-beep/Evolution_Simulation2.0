@@ -301,20 +301,20 @@ export class Simulation {
             x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
             y: Math.random() * SIM_CONFIG.WORLD_HEIGHT,
             color: null,
-            speed: SIM_CONFIG.BASE_SPEED + (Math.random() - 0.5),
-            size: SIM_CONFIG.CREATURE_BASE_RADIUS + (Math.random() - 0.5) * 2,
+            speed: SIM_CONFIG.DEFAULT_INITIAL_SPEED,
+            size: SIM_CONFIG.DEFAULT_INITIAL_SIZE,
             brain: null,
-            visionRange: this.visionRange + (Math.random() - 0.5) * 50,
-            lifespan: this.initialLifespanSeconds * 60 + (Math.random() - 0.5) * 60 * 10,
-            biomePreference: clamp(this.initialBiomePreference + Math.round((Math.random() - 0.5) * 2), 0, BIOME_TYPES.length - 1),
-            dietType: this.initialDietType,
-            attackPower: this.initialAttackPower + (Math.random() - 0.5) * 5,
-            defense: this.initialDefense + (Math.random() - 0.5) * 3,
-            metabolismRate: this.initialMetabolismRate + (Math.random() - 0.5) * 0.01,
-            reproductionCooldown: this.initialReproductionCooldown + (Math.random() - 0.5) * 20,
-            clutchSize: this.initialClutchSize + Math.round((Math.random() - 0.5)),
-            sensoryRange: this.initialSensoryRange + (Math.random() - 0.5) * 20,
-            optimalTemperature: SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE + (Math.random() - 0.5) * 0.2,
+            visionRange: SIM_CONFIG.DEFAULT_INITIAL_VISION_RANGE,
+            lifespan: SIM_CONFIG.DEFAULT_INITIAL_LIFESPAN_FRAMES,
+            biomePreference: SIM_CONFIG.DEFAULT_INITIAL_BIOME_PREFERENCE,
+            dietType: SIM_CONFIG.DEFAULT_INITIAL_DIET_TYPE,
+            attackPower: SIM_CONFIG.DEFAULT_INITIAL_ATTACK_POWER,
+            defense: SIM_CONFIG.DEFAULT_INITIAL_DEFENSE,
+            metabolismRate: SIM_CONFIG.DEFAULT_INITIAL_METABOLISM_RATE,
+            reproductionCooldown: SIM_CONFIG.DEFAULT_INITIAL_REPRODUCTION_COOLDOWN_FRAMES,
+            clutchSize: SIM_CONFIG.DEFAULT_INITIAL_CLUTCH_SIZE,
+            sensoryRange: SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE,
+            optimalTemperature: SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE,
         }));
 
         this.setMajorityMaxAgeMode();
@@ -361,6 +361,19 @@ export class Simulation {
             this.startNewGeneration(Array(SIM_CONFIG.FIXED_POPULATION_SIZE).fill(null).map(() => new Creature({
                 x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
                 y: Math.random() * SIM_CONFIG.WORLD_HEIGHT,
+                speed: SIM_CONFIG.DEFAULT_INITIAL_SPEED,
+                size: SIM_CONFIG.DEFAULT_INITIAL_SIZE,
+                visionRange: SIM_CONFIG.DEFAULT_INITIAL_VISION_RANGE,
+                lifespan: SIM_CONFIG.DEFAULT_INITIAL_LIFESPAN_FRAMES,
+                biomePreference: SIM_CONFIG.DEFAULT_INITIAL_BIOME_PREFERENCE,
+                dietType: SIM_CONFIG.DEFAULT_INITIAL_DIET_TYPE,
+                attackPower: SIM_CONFIG.DEFAULT_INITIAL_ATTACK_POWER,
+                defense: SIM_CONFIG.DEFAULT_INITIAL_DEFENSE,
+                metabolismRate: SIM_CONFIG.DEFAULT_INITIAL_METABOLISM_RATE,
+                reproductionCooldown: SIM_CONFIG.DEFAULT_INITIAL_REPRODUCTION_COOLDOWN_FRAMES,
+                clutchSize: SIM_CONFIG.DEFAULT_INITIAL_CLUTCH_SIZE,
+                sensoryRange: SIM_CONFIG.DEFAULT_INITIAL_SENSORY_RANGE,
+                optimalTemperature: SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE,
             })));
             return;
         }
@@ -380,20 +393,20 @@ export class Simulation {
             const offspringBrain = NeuralNetwork.crossover(parent1.brain, parent2.brain);
             const mutatedOffspringBrain = offspringBrain.cloneAndMutate(offspringBrain, (parent1.fitness + parent2.fitness) / 2, this.mutationRate, this.mutationStrength);
 
-            const offspringSpeed = parent1.speed + (Math.random() - 0.5) * this.mutationStrength;
-            const offspringSize = parent1.size + (Math.random() - 0.5) * this.mutationStrength * 1.5;
+            const offspringSpeed = parent1.speed + (Math.random() - 0.5) * this.mutationStrength * SIM_CONFIG.DEFAULT_INITIAL_SPEED * 0.2;
+            const offspringSize = parent1.size + (Math.random() - 0.5) * this.mutationStrength * SIM_CONFIG.CREATURE_BASE_RADIUS * 0.5;
             const offspringVisionRange = parent1.mutateVisionRange(parent1.visionRange, this.mutationRate, this.mutationStrength);
-            const offspringLifespan = parent1.mutateLifespan(parent1.lifespan, this.mutationRate, this.mutationStrength);
-            const offspringBiomePreference = parent1.mutateBiomePreference(parent1.biomePreference, this.mutationRate, this.mutationStrength);
+            const offspringLifespan = parent1.mutateLifespan(parent1.lifespan, this.mutationRate, this.mutationStrength * SIM_CONFIG.LIFESPAN_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringBiomePreference = parent1.mutateBiomePreference(parent1.biomePreference, this.mutationRate, this.mutationStrength * SIM_CONFIG.BIOME_PREFERENCE_MUTATION_STRENGTH_MULTIPLIER);
 
-            const offspringDietType = parent1.mutateDietType(parent1.dietType, this.mutationRate);
-            const offspringAttackPower = parent1.mutateAttackPower(parent1.attackPower, this.mutationRate, this.mutationStrength);
-            const offspringDefense = parent1.mutateDefense(parent1.defense, this.mutationRate, this.mutationStrength);
-            const offspringMetabolismRate = parent1.mutateMetabolismRate(parent1.metabolismRate, this.mutationRate, this.mutationStrength);
-            const offspringReproductionCooldown = parent1.mutateReproductionCooldown(parent1.reproductionCooldown, this.mutationRate, this.mutationStrength);
-            const offspringClutchSize = parent1.mutateClutchSize(parent1.clutchSize, this.mutationRate, this.mutationStrength);
-            const offspringSensoryRange = parent1.mutateSensoryRange(parent1.sensoryRange, this.mutationRate, this.mutationStrength);
-            const offspringOptimalTemperature = parent1.mutateOptimalTemperature(parent1.optimalTemperature, this.mutationRate, this.mutationStrength);
+            const offspringDietType = parent1.mutateDietType(parent1.dietType, this.mutationRate * SIM_CONFIG.DIET_TYPE_MUTATION_CHANCE_MULTIPLIER);
+            const offspringAttackPower = parent1.mutateAttackPower(parent1.attackPower, this.mutationRate, this.mutationStrength * SIM_CONFIG.ATTACK_POWER_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringDefense = parent1.mutateDefense(parent1.defense, this.mutationRate, this.mutationStrength * SIM_CONFIG.DEFENSE_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringMetabolismRate = parent1.mutateMetabolismRate(parent1.metabolismRate, this.mutationRate, this.mutationStrength * SIM_CONFIG.METABOLISM_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringReproductionCooldown = parent1.mutateReproductionCooldown(parent1.reproductionCooldown, this.mutationRate, this.mutationStrength * SIM_CONFIG.REPRODUCTION_COOLDOWN_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringClutchSize = parent1.mutateClutchSize(parent1.clutchSize, this.mutationRate, this.mutationStrength * SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringSensoryRange = parent1.mutateSensoryRange(parent1.sensoryRange, this.mutationRate, this.mutationStrength * SIM_CONFIG.SENSORY_RANGE_MUTATION_STRENGTH_MULTIPLIER);
+            const offspringOptimalTemperature = parent1.mutateOptimalTemperature(parent1.optimalTemperature, this.mutationRate, this.mutationStrength * SIM_CONFIG.OPTIMAL_TEMPERATURE_MUTATION_STRENGTH_MULTIPLIER);
 
             newGenerationCreatures.push(new Creature({
                 x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
@@ -431,12 +444,10 @@ export class Simulation {
         this.creatures = newCreatures;
         this.resetAndSpawnAllFood(this.foodCount);
 
-        // Update control panel stats
         UIManager.updateGenerationCount(this.currentGenerationNumber);
         UIManager.updatePopulationCount(this.creatures.filter(c => c.isAlive).length);
         UIManager.updateGenerationProgress(0);
 
-        // Update overlay stats
         UIManager.updateOverlayGenerationCount(this.currentGenerationNumber);
         UIManager.updateOverlayPopulationCount(this.creatures.filter(c => c.isAlive).length);
         UIManager.updateOverlayGenerationProgress(0);
@@ -544,12 +555,10 @@ export class Simulation {
 
         this.replenishFoodGradually();
 
-        // Update control panel stats
         UIManager.updatePopulationCount(aliveCreaturesThisFrame);
         const progress = Math.min(100, Math.floor((this.simulationFrameCount / this.maxAgeFrames) * 100));
         UIManager.updateGenerationProgress(progress);
 
-        // Update overlay stats
         UIManager.updateOverlayPopulationCount(aliveCreaturesThisFrame);
         UIManager.updateOverlayGenerationProgress(progress);
 
