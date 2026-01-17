@@ -6,6 +6,7 @@ export const SIM_CONFIG = {
     ENERGY_DECAY_BASE: 0.03,
     ENERGY_FROM_FOOD: 100,
     REPRODUCTION_THRESHOLD: 250,
+    REPRODUCTION_ENERGY_COST: 150, // New: Energy cost for a creature to reproduce
     BASE_SPEED: 1.5,
     WALL_HIT_PENALTY: 10,
     PARENT_SELECTION_PERCENTAGE: 0.2, // Percentage of fittest creatures selected for breeding
@@ -14,14 +15,19 @@ export const SIM_CONFIG = {
     BIOME_GRID_Y: 3,
     MAX_DATA_POINTS: 500, // Max data points for charts
     FOOD_SPAWN_MULTIPLIER: 10, // Multiplier for biome food spawn chance
+    FOOD_SPAWN_RATE: 0.1, // New: Average number of food items to spawn per frame (if below max)
     COLLISION_RADIUS_OFFSET: 3, // Additional radius for food collision
-    BRAIN_INPUT_NODES: 7, // Food Angle, Food Dist, Energy, Wall X Dist, Wall Y Dist, Biome Type, Vision Range
-    BRAIN_HIDDEN_NODES: 8, // Increased hidden nodes for more complexity
+    BRAIN_INPUT_NODES: 11, // UPDATED: Food Angle, Food Dist, Energy, Wall X Dist, Wall Y Dist, Biome Type, Vision Range, Nearest Creature Angle, Nearest Creature Dist, Biome Preference, Lifespan
+    BRAIN_HIDDEN_NODES: 12, // Increased hidden nodes for more complexity
     BRAIN_OUTPUT_NODES: 2, // Turn Rate, Speed Adjustment
     MAX_TURN_RATE: 0.4, // Max turn rate in radians
     MAX_SPEED_ADJUSTMENT: 1.0, // Max speed adjustment factor
     INITIAL_VISION_RANGE: 100,
     WALL_COLLISION_FITNESS_PENALTY: 50, // Direct fitness penalty for hitting walls
+    INITIAL_LIFESPAN_SECONDS: 50, // New: Default initial lifespan in seconds
+    LIFESPAN_MUTATION_STRENGTH: 0.1, // How much lifespan can mutate
+    BIOME_PREFERENCE_MUTATION_STRENGTH: 0.2, // How much biome preference can mutate
+    BIOME_PREFERENCE_FITNESS_MULTIPLIER: 50, // How strongly biome preference affects fitness
 };
 
 export const BIOME_TYPES = [
