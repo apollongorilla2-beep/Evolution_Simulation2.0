@@ -221,11 +221,14 @@ canvas.simulator {
     flex: 0 0 350px; /* Fixed width for side panel */
     min-width: 350px;
     padding: 20px;
+    display: flex; /* Make side-panel a flex container */
+    flex-direction: column; /* Stack its children vertically */
+    gap: 20px; /* Gap between brain displays and mini-map */
 }
 .side-panel h2 {
     text-align: center;
     margin-top: 0;
-    margin-bottom: 25px; /* Increased margin below title */
+    margin-bottom: 5px; /* Reduced margin to allow more space for content */
     color: #BB86FC; /* Light purple for side panel title */
     font-size: 1.5em;
 }
@@ -234,81 +237,82 @@ canvas.simulator {
     padding: 15px;
     border-radius: 8px;
     text-align: center;
-    margin-bottom: 20px; /* Increased space between brain displays */
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); /* Inner shadow for depth */
-    height: 250px; /* Give parent a fixed height, so canvas can fill it */
-    position: relative;
+    flex-grow: 1; /* Allow to grow and shrink vertically */
+    display: flex; /* Make it a flex container for its children */
+    flex-direction: column;
 }
 .creature-brain-display h4 {
-    margin: 0 0 12px 0; /* Increased margin below h4 */
+    margin: 0 0 12px 0; /* Margin below h4 */
     color: #e0e0e0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px; /* Increased gap */
+    gap: 8px;
     font-size: 1.1em;
+    flex-shrink: 0; /* Prevent h4 from shrinking */
 }
 .creature-brain-display .color-box {
-    width: 20px; /* Larger color box */
+    width: 20px;
     height: 20px;
     border: 1px solid #555;
-    border-radius: 4px; /* Slightly rounded */
+    border-radius: 4px;
     display: inline-block;
     vertical-align: middle;
 }
 .brain-canvas {
     width: 100%;
-    height: calc(100% - 40px); /* Fill remaining height of parent, accounting for h4 */
+    height: 100%; /* Fill parent's height */
     background-color: #2a2a4a;
     border: 1px solid #555;
-    margin-top: 0;
+    margin-top: 0; /* Reset margin-top */
     border-radius: 4px;
     display: block;
+    flex-grow: 1; /* Allow canvas to grow within its parent */
 }
 
 /* Charts Area */
 #charts-area {
     display: grid;
-    /* Responsive grid: 2 columns by default, 1 on smaller screens, 3 on larger */
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* Adjusted minmax for slightly wider charts */
-    gap: 25px; /* Increased gap between charts */
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 25px;
     width: 100%;
-    max-width: 1400px; /* Match max-width of simulation-wrapper */
+    max-width: 1400px;
     margin-top: 20px;
 }
 
 .chart-container {
-    height: 400px; /* Fixed height for charts */
+    height: 400px;
     padding: 20px;
     background-color: #252540;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box; /* Include padding in height */
+    box-sizing: border-box;
 }
 .chart-container h3 {
     text-align: center;
     margin-top: 0;
     margin-bottom: 15px;
-    color: #03DAC6; /* Teal for chart titles */
+    color: #03DAC6;
     font-size: 1.2em;
 }
 
 /* Creature Info Panel */
 #creatureInfoPanel {
-    position: fixed; /* Changed to fixed to stay in viewport */
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 400px; /* Slightly wider */
+    width: 400px;
     background-color: #252540;
     border-radius: 8px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-    padding: 30px; /* Increased padding */
+    padding: 30px;
     z-index: 1000;
     text-align: left;
     border: 1px solid #3a3a5e;
-    max-height: 90vh; /* Prevent panel from exceeding viewport height */
-    overflow-y: auto; /* Allow scrolling if content is too long */
+    max-height: 90vh;
+    overflow-y: auto;
 }
 #creatureInfoPanel.hidden {
     display: none;
@@ -317,29 +321,29 @@ canvas.simulator {
     text-align: center;
     color: #FFC107;
     margin-top: 0;
-    margin-bottom: 25px; /* Increased margin below title */
+    margin-bottom: 25px;
     font-size: 1.4em;
 }
 #creatureInfoPanel h4 {
     color: #BB86FC;
-    margin-top: 20px; /* Increased margin above h4 */
-    margin-bottom: 12px; /* Increased margin below h4 */
+    margin-top: 20px;
+    margin-bottom: 12px;
     border-bottom: 1px solid #3a3a5e;
     padding-bottom: 8px;
 }
 #creatureInfoPanel p {
-    margin: 8px 0; /* Increased margin for paragraphs */
+    margin: 8px 0;
     color: #e0e0e0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Allow text to wrap if long */
+    flex-wrap: wrap;
 }
 #creatureInfoPanel p span {
     font-weight: normal;
     color: #b0b0b0;
     text-align: right;
-    max-width: 60%; /* Limit width of value span */
+    max-width: 60%;
 }
 #creatureInfoPanel .color-box {
     width: 20px;
@@ -349,17 +353,17 @@ canvas.simulator {
     display: inline-block;
     vertical-align: middle;
     margin-left: 10px;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
 }
 #closeInfoPanelButton {
     background-color: #CF6679;
     color: white;
     width: 100%;
-    padding: 12px; /* Increased padding */
+    padding: 12px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: 25px; /* Increased margin top */
+    margin-top: 25px;
     transition: background-color 0.2s ease;
 }
 #closeInfoPanelButton:hover {
@@ -368,13 +372,21 @@ canvas.simulator {
 
 /* Mini-map */
 .mini-map-container {
-    margin-top: 25px; /* Increased margin top */
+    margin-top: 0; /* Reset margin-top, gap handles spacing */
     background-color: #3a3a5e;
-    padding: 20px; /* Increased padding */
+    padding: 20px;
     border-radius: 8px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
-    height: 265px; /* Fixed height for mini-map container */
-    position: relative;
+    flex-grow: 1; /* Allow to grow and shrink vertically */
+    display: flex;
+    flex-direction: column;
+}
+.mini-map-container h3 {
+    color: #03DAC6;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    flex-shrink: 0;
 }
 #miniMapCanvas {
     width: 100%;
@@ -384,17 +396,17 @@ canvas.simulator {
     display: block;
     margin: 0 auto;
     border-radius: 4px;
+    flex-grow: 1; /* Allow canvas to grow within its parent */
 }
 
 /* Health Bar Styles */
-/* These styles are applied by JS dynamically, but here for reference */
 .health-bar-container {
     position: absolute;
-    top: -15px; /* Position above creature */
+    top: -15px;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px; /* Width of the bar */
-    height: 4px; /* Height of the bar */
+    width: 20px;
+    height: 4px;
     background-color: #555;
     border-radius: 2px;
     overflow: hidden;
@@ -402,7 +414,7 @@ canvas.simulator {
 
 .health-bar {
     height: 100%;
-    background-color: #4CAF50; /* Green for healthy */
-    width: 100%; /* Default to full */
-    transition: width 0.1s ease-out; /* Smooth transition for health changes */
+    background-color: #4CAF50;
+    width: 100%;
+    transition: width 0.1s ease-out;
 }
