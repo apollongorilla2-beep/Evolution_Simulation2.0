@@ -212,27 +212,7 @@ export class Simulation {
                 this.biomeMap[y][x] = Math.floor(Math.random() * biomeTypesCount);
             }
         }
-    }
-
-    /**
-     * Draws the biome grid on the canvas.
-     * */
-    drawBiomes() {
-        if (!this.showBiomes) return;
-
-        const cellWidth = SIM_CONFIG.WORLD_WIDTH / SIM_CONFIG.BIOME_GRID_X;
-        const cellHeight = SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y;
-        for (let y = 0; y < SIM_CONFIG.BIOME_GRID_Y; y++) {
-            for (let x = 0; x < SIM_CONFIG.BIOME_GRID_X; x++) {
-                const biomeType = BIOME_TYPES[this.biomeMap[y][x]];
-                this.ctx.fillStyle = biomeType.color;
-                this.ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
-
-                this.ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-                this.ctx.lineWidth = 1;
-                this.ctx.strokeRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
-            }
-        }
+        console.log("Biome map generated."); // Debug
     }
 
     /**
@@ -242,6 +222,7 @@ export class Simulation {
     resetAndSpawnAllFood(count) {
         this.food = [];
         this.spawnFood(count);
+        console.log(`Food reset and spawned: ${this.food.length} items.`); // Debug
     }
 
     /**
@@ -264,7 +245,7 @@ export class Simulation {
                 const clampedY = clamp(biomeY, 0, SIM_CONFIG.BIOME_GRID_Y - 1);
                 const biome = BIOME_TYPES[this.biomeMap[clampedY][clampedX]];
 
-                if (Math.random() < biome.food_spawn_chance * SIM_CONFIG.FOOD_SPAWN_MULTIPLIER) {
+                if (Math.random() < (biome ? biome.food_spawn_chance : 0.005) * SIM_CONFIG.FOOD_SPAWN_MULTIPLIER) { // Defensive check
                     const energyValue = SIM_CONFIG.ENERGY_FROM_FOOD + (Math.random() - 0.5) * 50;
                     const isToxic = Math.random() < SIM_CONFIG.FOOD_TOXICITY_CHANCE;
                     this.food.push(new Food(randomX, randomY, 'plant', energyValue, isToxic));
@@ -299,6 +280,7 @@ export class Simulation {
      * Initializes the entire simulation.
      * */
     initSimulation() {
+        console.log("Initializing new simulation..."); // Debug
         this.currentGenerationNumber = 0;
         ChartManager.clearData();
         ChartManager.initCharts();
@@ -329,6 +311,7 @@ export class Simulation {
             optimalTemperature: SIM_CONFIG.DEFAULT_INITIAL_OPTIMAL_TEMPERATURE,
             armor: SIM_CONFIG.DEFAULT_INITIAL_ARMOR, // NEW: Pass initial armor
         }));
+        console.log(`Initial creatures created: ${initialCreatures.length}`); // Debug
 
         this.setMajorityMaxAgeMode();
         this.startNewGeneration(initialCreatures);
@@ -341,12 +324,14 @@ export class Simulation {
         UIManager.togglePauseButton.textContent = 'Pause Simulation';
         UIManager.resetButton.textContent = 'Reset Simulation';
         this.gameLoop();
+        console.log("Simulation initialized and gameLoop started."); // Debug
     }
 
     /**
      * Ends the current generation and prepares the next one.
      * */
     endGenerationAndStartNewOne() {
+        console.log(`Ending Generation ${this.currentGenerationNumber}...`); // Debug
         const allCreaturesInGeneration = [...this.creatures];
 
         for (const creature of allCreaturesInGeneration) {
@@ -458,6 +443,7 @@ export class Simulation {
                 armor: offspringArmor, // NEW: Pass mutated armor
             }));
         }
+        console.log(`New generation creatures prepared: ${newGenerationCreatures.length}`); // Debug
 
         this.startNewGeneration(newGenerationCreatures);
     }
@@ -484,6 +470,7 @@ export class Simulation {
         UIManager.updateOverlayCurrentTemperature(this.currentWorldTemperature);
 
         UIManager.updateBrainDisplays(this.creatures);
+        console.log(`Generation ${this.currentGenerationNumber} started with ${this.creatures.length} creatures.`); // Debug
     }
 
     /**
@@ -514,6 +501,7 @@ export class Simulation {
      * Updates the state of the simulation each frame.
      * */
     update() {
+        // console.log(`Simulation Update: Frame ${this.simulationFrameCount}, Alive Creatures: ${this.creatures.filter(c => c.isAlive).length}`); // Debug for every frame (can be chatty)
         this.simulationFrameCount++;
         const currentTime = performance.now();
 
@@ -623,6 +611,10 @@ export class Simulation {
 
         let bestCreature = null;
         let highestFitness = -1;
+
+        if (this.creatures.length === 0) {
+            console.warn("No creatures to draw."); // Debug
+        }
 
         for (const creature of this.creatures) {
             creature.draw(this.ctx, this.showHealthBars);
