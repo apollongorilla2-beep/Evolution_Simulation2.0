@@ -263,8 +263,19 @@ export class Simulation {
         // Sort creatures by fitness to select the fittest parents
         const sortedCreatures = [...allCreaturesInGeneration].sort((a, b) => b.fitness - a.fitness);
 
-        const numParents = Math.max(2, Math.floor(SIM_CONFIG.FIXED_POPULATION_SIZE * SIM_CONFIG.PARENT_SELECTION_PERCENTAGE));
-        const parents = sortedCreatures.slice(0, numParents);
+        const newGenerationCreatures = [];
+
+        // --- Elitism: Carry over the top N fittest creatures ---
+        const eliteCount = Math.floor(SIM_CONFIG.FIXED_POPULATION_SIZE * SIM_CONFIG.ELITE_PERCENTAGE);
+        for (let i = 0; i < eliteCount; i++) {
+            if (sortedCreatures[i]) {
+                newGenerationCreatures.push(sortedCreatures[i].cloneForNextGeneration());
+            }
+        }
+
+        // Select parents from the remaining fittest for crossover and mutation
+        const numParentsForBreeding = Math.max(2, Math.floor(SIM_CONFIG.FIXED_POPULATION_SIZE * SIM_CONFIG.PARENT_SELECTION_PERCENTAGE));
+        const parents = sortedCreatures.slice(0, numParentsForBreeding);
 
         if (parents.length < 2 || parents[0].fitness <= 0) {
             console.warn("Not enough fit creatures survived to reproduce! Starting a fresh, random population.");
@@ -275,10 +286,11 @@ export class Simulation {
             return;
         }
 
-        const newGenerationCreatures = [];
+        // Fill the rest of the population through crossover and mutation
         while (newGenerationCreatures.length < SIM_CONFIG.FIXED_POPULATION_SIZE) {
             const parent1 = parents[Math.floor(Math.random() * parents.length)];
             let parent2 = parent1;
+            // Ensure parent2 is different from parent1 for diversity in crossover
             while (parent2 === parent1) {
                 parent2 = parents[Math.floor(Math.random() * parents.length)];
             }
@@ -296,7 +308,7 @@ export class Simulation {
             newGenerationCreatures.push(new Creature(
                 Math.random() * SIM_CONFIG.WORLD_WIDTH,
                 Math.random() * SIM_CONFIG.WORLD_HEIGHT,
-                parent1.mutateColor(parent1.originalColor, this.mutationRate),
+                parent1.mutateColor(parent1.originalColor, this.mutationRate, this.mutationStrength),
                 clamp(offspringSpeed, 0.5, SIM_CONFIG.BASE_SPEED * 2.5),
                 clamp(offspringSize, 3, 15),
                 mutatedOffspringBrain,
