@@ -1,39 +1,61 @@
 import { SIM_CONFIG, BIOME_TYPES } from './constants.js';
 import { clamp, normalizeAngle } from './utils.js';
 import { NeuralNetwork } from './neuralNetwork.js';
+import { Food } from './food.js'; // Import Food to check its type
 
 export class Creature {
     /**
      * Creates a new Creature instance.
-     * @param {number} x - Initial X position.
-     * @param {number} y - Initial Y position.
-     * @param {string} [color=null] - Creature's color. If null, a random color is generated.
-     * @param {number} [speed=SIM_CONFIG.BASE_SPEED] - Creature's movement speed.
-     * @param {number} [size=SIM_CONFIG.CREATURE_BASE_RADIUS] - Creature's size (radius).
-     * @param {NeuralNetwork} [brain=null] - Creature's neural network. If null, a new one is created.
-     * @param {number} [visionRange=SIM_CONFIG.INITIAL_VISION_RANGE] - Creature's vision range.
-     * @param {number} [lifespan=SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60] - Creature's maximum age in frames.
-     * @param {number} [biomePreference=0] - Creature's preferred biome type index.
+     * @param {object} options - Configuration options for the creature.
+     * @param {number} options.x - Initial X position.
+     * @param {number} options.y - Initial Y position.
+     * @param {string} [options.color=null] - Creature's color. If null, a random color is generated.
+     * @param {number} [options.speed=SIM_CONFIG.BASE_SPEED] - Creature's movement speed.
+     * @param {number} [options.size=SIM_CONFIG.CREATURE_BASE_RADIUS] - Creature's size (radius).
+     * @param {NeuralNetwork} [options.brain=null] - Creature's neural network. If null, a new one is created.
+     * @param {number} [options.visionRange=SIM_CONFIG.INITIAL_VISION_RANGE] - Creature's vision range.
+     * @param {number} [options.lifespan=SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60] - Creature's maximum age in frames.
+     * @param {number} [options.biomePreference=0] - Creature's preferred biome type index.
+     * @param {number} [options.dietType=SIM_CONFIG.INITIAL_DIET_TYPE] - Creature's diet type (0=Herbivore, 1=Carnivore).
+     * @param {number} [options.attackPower=SIM_CONFIG.INITIAL_ATTACK_POWER] - Creature's attack power.
+     * @param {number} [options.defense=SIM_CONFIG.INITIAL_DEFENSE] - Creature's defense.
+     * @param {number} [options.metabolismRate=SIM_CONFIG.INITIAL_METABOLISM_RATE] - Creature's metabolism rate.
+     * @param {number} [options.reproductionCooldown=SIM_CONFIG.INITIAL_REPRODUCTION_COOLDOWN] - Frames before next reproduction.
+     * @param {number} [options.clutchSize=SIM_CONFIG.INITIAL_CLUTCH_SIZE] - Number of offspring per reproduction.
+     * @param {number} [options.sensoryRange=SIM_CONFIG.INITIAL_SENSORY_RANGE] - Range for non-visual senses.
+     * @param {number} [options.optimalTemperature=SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE] - Creature's optimal temperature (normalized 0-1).
      */
-    constructor(x, y, color = null, speed = SIM_CONFIG.BASE_SPEED, size = SIM_CONFIG.CREATURE_BASE_RADIUS, brain = null, visionRange = SIM_CONFIG.INITIAL_VISION_RANGE, lifespan = SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60, biomePreference = 0) {
-        this.x = x;
-        this.y = y;
-        this.originalColor = color || '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    constructor(options) {
+        this.id = Math.random().toString(36).substring(2, 9); // Unique ID for info panel
+        this.x = options.x;
+        this.y = options.y;
+        this.originalColor = options.color || '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
         this.color = this.originalColor;
-        this.speed = speed;
-        this.size = size;
+        this.speed = options.speed || SIM_CONFIG.BASE_SPEED;
+        this.size = options.size || SIM_CONFIG.CREATURE_BASE_RADIUS;
         this.energy = 100;
         this.age = 0;
         this.direction = Math.random() * Math.PI * 2;
         this.foodEatenCount = 0;
         this.isAlive = true;
         this.fitness = 0; // Stored fitness from previous generation for selection and adaptive mutation
-        this.visionRange = visionRange;
+        this.visionRange = options.visionRange || SIM_CONFIG.INITIAL_VISION_RANGE;
         this.wallHits = 0; // Track wall hits for fitness penalty
-        this.lifespan = lifespan; // New: Creature's individual lifespan
-        this.biomePreference = biomePreference; // New: Creature's preferred biome type index
+        this.lifespan = options.lifespan || SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60; // Creature's individual lifespan in frames
+        this.biomePreference = options.biomePreference || 0; // Creature's preferred biome type index
 
-        this.brain = brain || new NeuralNetwork(
+        // New Genetic Traits
+        this.dietType = options.dietType !== undefined ? options.dietType : SIM_CONFIG.INITIAL_DIET_TYPE; // 0=Herbivore, 1=Carnivore
+        this.attackPower = options.attackPower || SIM_CONFIG.INITIAL_ATTACK_POWER;
+        this.defense = options.defense || SIM_CONFIG.INITIAL_DEFENSE;
+        this.metabolismRate = options.metabolismRate || SIM_CONFIG.INITIAL_METABOLISM_RATE;
+        this.reproductionCooldown = options.reproductionCooldown || SIM_CONFIG.INITIAL_REPRODUCTION_COOLDOWN;
+        this.currentReproductionCooldown = 0; // Tracks frames until next reproduction is possible
+        this.clutchSize = options.clutchSize || SIM_CONFIG.INITIAL_CLUTCH_SIZE;
+        this.sensoryRange = options.sensoryRange || SIM_CONFIG.INITIAL_SENSORY_RANGE; // For scent/hearing
+        this.optimalTemperature = options.optimalTemperature || SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE; // Normalized 0-1
+
+        this.brain = options.brain || new NeuralNetwork(
             SIM_CONFIG.BRAIN_INPUT_NODES,
             SIM_CONFIG.BRAIN_HIDDEN_NODES,
             SIM_CONFIG.BRAIN_OUTPUT_NODES
@@ -60,21 +82,25 @@ export class Creature {
      * @param {Food[]} globalFood - Array of all food items.
      * @param {Creature[]} globalCreatures - Array of all other creatures.
      * @param {number[][]} biomeMap - The global biome map.
+     * @param {number} currentTemperature - The normalized current temperature of the world.
      * @returns {{turnRate: number, speedAdjustment: number}} The actions determined by the brain.
      */
-    think(globalFood, globalCreatures, biomeMap) {
+    think(globalFood, globalCreatures, biomeMap, currentTemperature) {
         // Gather inputs (normalized 0-1)
         let foodAngleInput = 0.5; // Neutral if no food
         let foodDistanceInput = 0; // Farthest if no food (0 implies no food, 1 implies very close)
         let closestFood = null;
         let minFoodDistance = Infinity;
 
-        // Find closest food within vision range
+        // Find closest food within combined vision and sensory range
         for (const f of globalFood) {
-            const dist = Math.sqrt((this.x - f.x) ** 2 + (this.y - f.y) ** 2);
-            if (dist < minFoodDistance && dist <= this.visionRange) {
-                minFoodDistance = dist;
-                closestFood = f;
+            // Check if food type matches diet
+            if ((this.dietType === 0 && f.type === 'plant') || (this.dietType === 1 && f.type === 'meat')) {
+                const dist = Math.sqrt((this.x - f.x) ** 2 + (this.y - f.y) ** 2);
+                if (dist < minFoodDistance && dist <= (this.visionRange + this.sensoryRange)) {
+                    minFoodDistance = dist;
+                    closestFood = f;
+                }
             }
         }
 
@@ -83,11 +109,11 @@ export class Creature {
             let relativeAngle = normalizeAngle(angleToFood - this.direction);
             foodAngleInput = relativeAngle / (2 * Math.PI);
 
-            // Normalize food distance: closer is higher value (1 is closest, 0 is furthest within vision)
-            foodDistanceInput = 1 - (minFoodDistance / this.visionRange);
+            // Normalize food distance: closer is higher value (1 is closest, 0 is furthest within combined range)
+            foodDistanceInput = 1 - (minFoodDistance / (this.visionRange + this.sensoryRange));
         }
 
-        // New: Nearest other creature inputs
+        // Nearest other creature inputs
         let nearestCreatureAngleInput = 0.5; // Neutral if no other creature
         let nearestCreatureDistanceInput = 0; // Farthest if no other creature
         let closestOtherCreature = null;
@@ -96,7 +122,7 @@ export class Creature {
         for (const otherCreature of globalCreatures) {
             if (otherCreature !== this && otherCreature.isAlive) { // Don't consider self or dead creatures
                 const dist = Math.sqrt((this.x - otherCreature.x) ** 2 + (this.y - otherCreature.y) ** 2);
-                if (dist < minCreatureDistance && dist <= this.visionRange) {
+                if (dist < minCreatureDistance && dist <= (this.visionRange + this.sensoryRange)) { // Use combined range
                     minCreatureDistance = dist;
                     closestOtherCreature = otherCreature;
                 }
@@ -107,7 +133,7 @@ export class Creature {
             const angleToCreature = Math.atan2(closestOtherCreature.y - this.y, closestOtherCreature.x - this.x);
             let relativeAngle = normalizeAngle(angleToCreature - this.direction);
             nearestCreatureAngleInput = relativeAngle / (2 * Math.PI);
-            nearestCreatureDistanceInput = 1 - (minCreatureDistance / this.visionRange);
+            nearestCreatureDistanceInput = 1 - (minCreatureDistance / (this.visionRange + this.sensoryRange));
         }
 
 
@@ -133,20 +159,41 @@ export class Creature {
         // Vision Range input (normalized)
         let visionRangeInput = clamp(this.visionRange / 300, 0, 1); // Max vision range is 300 from slider
 
-        // New: Biome Preference input (normalized)
+        // Biome Preference input (normalized)
         const biomePreferenceInput = this.biomePreference / (BIOME_TYPES.length - 1);
 
-        // New: Lifespan input (normalized)
-        const lifespanInput = clamp(this.lifespan / (SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60 * 2), 0, 1); // Normalize against double max initial lifespan
+        // Lifespan input (normalized)
+        const lifespanInput = clamp(this.age / this.lifespan, 0, 1); // Normalize current age against individual lifespan
+
+        // New: Diet Type input (normalized: 0 for herbivore, 1 for carnivore)
+        const dietTypeInput = this.dietType;
+
+        // New: Sensory Range input (normalized)
+        const sensoryRangeInput = clamp(this.sensoryRange / 150, 0, 1); // Max sensory range is 150 from slider
+
+        // New: Current Temperature input (normalized)
+        const currentTemperatureInput = currentTemperature;
+
+        // New: Hazard Proximity input (normalized distance to nearest hazard, if any)
+        let hazardProximityInput = 0; // 0 if no hazard, 1 if very close
+        const currentBiome = this.getBiome(biomeMap);
+        if (currentBiome.is_hazardous) {
+            // Simplified: if in a hazardous biome, consider it close to a hazard
+            hazardProximityInput = 1;
+        }
 
 
         const inputs = [
             foodAngleInput, foodDistanceInput, energyInput,
             wallXDistanceInput, wallYDistanceInput, biomeInput,
             visionRangeInput,
-            nearestCreatureAngleInput, nearestCreatureDistanceInput, // New creature sensing inputs
-            biomePreferenceInput, // New biome preference input
-            lifespanInput // New lifespan input
+            nearestCreatureAngleInput, nearestCreatureDistanceInput,
+            biomePreferenceInput,
+            lifespanInput,
+            dietTypeInput, // New
+            sensoryRangeInput, // New
+            currentTemperatureInput, // New
+            hazardProximityInput // New
         ];
 
         const outputs = this.brain.feedForward(inputs);
@@ -161,8 +208,9 @@ export class Creature {
     /**
      * Draws the creature on the canvas.
      * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
+     * @param {boolean} showHealthBars - Whether to draw health bars.
      */
-    draw(ctx) {
+    draw(ctx, showHealthBars) {
         if (!this.isAlive) {
             // Draw dead creatures as smaller, greyed-out circles
             ctx.beginPath();
@@ -206,7 +254,97 @@ export class Creature {
         ctx.arc(eyeX, eyeY, this.size * 0.3, 0, Math.PI * 2);
         ctx.fillStyle = 'white';
         ctx.fill();
+
+        // New: Draw Health Bar
+        if (showHealthBars) {
+            const barWidth = Math.max(10, this.size * 2); // Bar width scales with creature size, min 10
+            const barHeight = 3;
+            const barX = this.x - barWidth / 2;
+            const barY = this.y - this.size - barHeight - 5; // Position above creature
+
+            ctx.fillStyle = '#555'; // Background of the bar
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            const healthPercentage = Math.max(0, this.energy / (SIM_CONFIG.REPRODUCTION_THRESHOLD * 2)); // Normalized energy
+            ctx.fillStyle = healthPercentage > 0.5 ? '#4CAF50' : (healthPercentage > 0.2 ? '#FFC107' : '#CF6679'); // Green, Orange, Red
+            ctx.fillRect(barX, barY, barWidth * healthPercentage, barHeight);
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+        }
     }
+
+    /**
+     * Handles food consumption.
+     * @param {number} foodIndex - The index of the food item in the global food array.
+     * @param {Food[]} globalFood - The global food array.
+     * @param {number[][]} biomeMap - The global biome map.
+     */
+    eat(foodIndex, globalFood, biomeMap) {
+        const foodItem = globalFood[foodIndex];
+
+        // New: Check for toxic food
+        if (foodItem.isToxic) {
+            this.energy -= SIM_CONFIG.TOXIC_FOOD_ENERGY_LOSS;
+            this.color = 'purple'; // Flash purple for toxic
+        } else {
+            this.energy += foodItem.energyValue; // Use food's energy value
+            this.foodEatenCount++;
+            this.color = 'yellow'; // Flash yellow
+        }
+
+        globalFood.splice(foodIndex, 1);
+
+        setTimeout(() => {
+            this.color = this.originalColor;
+        }, 100);
+    }
+
+    /**
+     * New: Handles combat with another creature.
+     * @param {Creature} targetCreature - The creature being attacked.
+     * @returns {boolean} True if combat occurred, false otherwise.
+     */
+    engageCombat(targetCreature) {
+        if (!this.isAlive || !targetCreature.isAlive || this.dietType !== 1) { // Only alive carnivores can attack
+            return false;
+        }
+
+        const distance = Math.sqrt((this.x - targetCreature.x)**2 + (this.y - targetCreature.y)**2);
+        if (distance > SIM_CONFIG.COMBAT_RANGE) {
+            return false;
+        }
+
+        // Consume energy for combat
+        this.energy -= SIM_CONFIG.COMBAT_ENERGY_COST;
+        if (this.energy <= 0) {
+            this.isAlive = false;
+            return false;
+        }
+
+        // Calculate damage
+        const rawDamage = this.attackPower * SIM_CONFIG.COMBAT_DAMAGE_MULTIPLIER;
+        const damageDealt = Math.max(0, rawDamage - targetCreature.defense);
+
+        targetCreature.energy -= damageDealt;
+
+        // Visual feedback for combat
+        this.color = 'red';
+        targetCreature.color = 'red';
+        setTimeout(() => {
+            this.color = this.originalColor;
+            targetCreature.color = targetCreature.originalColor;
+        }, 100);
+
+        if (targetCreature.energy <= 0) {
+            targetCreature.isAlive = false;
+            // Transfer energy from dead creature
+            this.energy += Math.max(0, SIM_CONFIG.MEAT_FROM_DEAD_CREATURE);
+        }
+        return true;
+    }
+
 
     /**
      * Updates the creature's state each frame.
@@ -215,14 +353,30 @@ export class Creature {
      * @param {Creature[]} globalCreatures - Array of all other creatures.
      * @param {number} mutationRate - Current mutation rate.
      * @param {number} mutationStrength - Current mutation strength.
+     * @param {number} currentTemperature - The normalized current temperature of the world.
      */
-    update(biomeMap, globalFood, globalCreatures, mutationRate, mutationStrength) {
+    update(biomeMap, globalFood, globalCreatures, mutationRate, mutationStrength, currentTemperature) {
         this.age++;
+        this.currentReproductionCooldown = Math.max(0, this.currentReproductionCooldown - 1);
 
         const currentBiome = this.getBiome(biomeMap);
-        this.energy -= SIM_CONFIG.ENERGY_DECAY_BASE * currentBiome.movement_cost_multiplier;
 
-        const { turnRate, speedAdjustment } = this.think(globalFood, globalCreatures, biomeMap); // Pass globalCreatures
+        // New: Apply metabolism rate
+        let energyDecay = SIM_CONFIG.ENERGY_DECAY_BASE * this.metabolismRate * currentBiome.movement_cost_multiplier;
+
+        // New: Apply temperature effects
+        const tempDeviation = Math.abs(currentTemperature - this.optimalTemperature);
+        energyDecay += tempDeviation * SIM_CONFIG.TEMPERATURE_EFFECT_MULTIPLIER;
+
+        // New: Apply hazard energy drain
+        if (currentBiome.is_hazardous) {
+            energyDecay += SIM_CONFIG.HAZARD_ENERGY_DRAIN;
+        }
+
+        this.energy -= energyDecay;
+
+
+        const { turnRate, speedAdjustment } = this.think(globalFood, globalCreatures, biomeMap, currentTemperature); // Pass currentTemperature
         this.direction = normalizeAngle(this.direction + turnRate);
         this.speed = clamp(SIM_CONFIG.BASE_SPEED + speedAdjustment, 0.5, SIM_CONFIG.BASE_SPEED * 2.5);
 
@@ -266,21 +420,6 @@ export class Creature {
     }
 
     /**
-     * Handles food consumption.
-     * @param {number} foodIndex - The index of the food item in the global food array.
-     * @param {Food[]} globalFood - The global food array.
-     */
-    eat(foodIndex, globalFood) {
-        this.energy += SIM_CONFIG.ENERGY_FROM_FOOD;
-        this.foodEatenCount++;
-        globalFood.splice(foodIndex, 1);
-        this.color = 'yellow'; // Flash yellow
-        setTimeout(() => {
-            this.color = this.originalColor;
-        }, 100);
-    }
-
-    /**
      * Calculates the creature's fitness for selection.
      * @param {number[][]} biomeMap - The global biome map.
      * @returns {number} The calculated fitness score.
@@ -295,7 +434,7 @@ export class Creature {
         const currentBiome = this.getBiome(biomeMap);
         baseFitness += currentBiome.base_adaptation_score * 75;
 
-        // New: Reward/penalty based on biome preference
+        // Reward/penalty based on biome preference
         const currentBiomeIndex = BIOME_TYPES.findIndex(b => b.type === currentBiome.type);
         const biomePreferenceDifference = Math.abs(this.biomePreference - currentBiomeIndex);
         baseFitness -= biomePreferenceDifference * SIM_CONFIG.BIOME_PREFERENCE_FITNESS_MULTIPLIER; // Penalty for being in a non-preferred biome
@@ -311,10 +450,27 @@ export class Creature {
         // Penalty for frequent wall collisions
         baseFitness -= this.wallHits * SIM_CONFIG.WALL_COLLISION_FITNESS_PENALTY;
 
-        // New: Reward for optimal lifespan (not too short, not too long relative to initial)
+        // Reward for optimal lifespan (not too short, not too long relative to initial)
         const lifespanDifference = Math.abs(this.lifespan - (SIM_CONFIG.INITIAL_LIFESPAN_SECONDS * 60));
         baseFitness -= lifespanDifference * 0.1;
 
+        // New: Reward for optimal metabolism (closer to initial base is better, or a range)
+        const metabolismDifference = Math.abs(this.metabolismRate - SIM_CONFIG.INITIAL_METABOLISM_RATE);
+        baseFitness -= metabolismDifference * 1000; // Penalize deviation from initial metabolism
+
+        // New: Reward for optimal reproduction cooldown (not too long, not too short)
+        const reproCooldownDifference = Math.abs(this.reproductionCooldown - SIM_CONFIG.INITIAL_REPRODUCTION_COOLDOWN);
+        baseFitness -= reproCooldownDifference * 0.5;
+
+        // New: Reward for attack/defense balance (complex, but simple for now: penalize very low values)
+        baseFitness += this.attackPower * 2;
+        baseFitness += this.defense * 2;
+        if (this.attackPower < 5) baseFitness -= 50;
+        if (this.defense < 2) baseFitness -= 50;
+
+        // New: Reward for sensory range (up to a point)
+        baseFitness += this.sensoryRange * 0.5;
+        if (this.sensoryRange > SIM_CONFIG.INITIAL_SENSORY_RANGE * 2) baseFitness -= 20; // Penalize excessive sensory range
 
         return Math.max(0, baseFitness); // Fitness cannot be negative
     }
@@ -360,7 +516,7 @@ export class Creature {
     }
 
     /**
-     * New: Mutates a creature's lifespan.
+     * Mutates a creature's lifespan.
      * @param {number} parentLifespan - The parent's lifespan.
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
@@ -377,7 +533,7 @@ export class Creature {
     }
 
     /**
-     * New: Mutates a creature's biome preference.
+     * Mutates a creature's biome preference.
      * @param {number} parentBiomePreference - The parent's biome preference.
      * @param {number} mutationRate - The current mutation rate.
      * @param {number} mutationStrength - The current mutation strength.
@@ -392,23 +548,149 @@ export class Creature {
         return parentBiomePreference;
     }
 
+    /**
+     * New: Mutates a creature's diet type.
+     * @param {number} parentDietType - The parent's diet type.
+     * @param {number} mutationRate - The current mutation rate.
+     * @returns {number} The new mutated diet type.
+     */
+    mutateDietType(parentDietType, mutationRate) {
+        if (Math.random() < mutationRate * SIM_CONFIG.DIET_TYPE_MUTATION_STRENGTH) {
+            return parentDietType === 0 ? 1 : 0; // Flip between herbivore (0) and carnivore (1)
+        }
+        return parentDietType;
+    }
+
+    /**
+     * New: Mutates a creature's attack power.
+     * @param {number} parentAttackPower - The parent's attack power.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated attack power.
+     */
+    mutateAttackPower(parentAttackPower, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentAttackPower + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.ATTACK_POWER_MUTATION_STRENGTH * 10,
+                1, 50);
+        }
+        return parentAttackPower;
+    }
+
+    /**
+     * New: Mutates a creature's defense.
+     * @param {number} parentDefense - The parent's defense.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated defense.
+     */
+    mutateDefense(parentDefense, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentDefense + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.DEFENSE_MUTATION_STRENGTH * 10,
+                0, 30);
+        }
+        return parentDefense;
+    }
+
+    /**
+     * New: Mutates a creature's metabolism rate.
+     * @param {number} parentMetabolismRate - The parent's metabolism rate.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated metabolism rate.
+     */
+    mutateMetabolismRate(parentMetabolismRate, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentMetabolismRate + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.METABOLISM_MUTATION_STRENGTH,
+                0.01, 0.1);
+        }
+        return parentMetabolismRate;
+    }
+
+    /**
+     * New: Mutates a creature's reproduction cooldown.
+     * @param {number} parentReproductionCooldown - The parent's reproduction cooldown.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated reproduction cooldown.
+     */
+    mutateReproductionCooldown(parentReproductionCooldown, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentReproductionCooldown + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.REPRODUCTION_COOLDOWN_MUTATION_STRENGTH,
+                30, 300);
+        }
+        return parentReproductionCooldown;
+    }
+
+    /**
+     * New: Mutates a creature's clutch size.
+     * @param {number} parentClutchSize - The parent's clutch size.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated clutch size.
+     */
+    mutateClutchSize(parentClutchSize, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentClutchSize + Math.round((Math.random() - 0.5) * mutationStrength * SIM_CONFIG.CLUTCH_SIZE_MUTATION_STRENGTH),
+                1, 5);
+        }
+        return parentClutchSize;
+    }
+
+    /**
+     * New: Mutates a creature's sensory range.
+     * @param {number} parentSensoryRange - The parent's sensory range.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated sensory range.
+     */
+    mutateSensoryRange(parentSensoryRange, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentSensoryRange + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.SENSORY_RANGE_MUTATION_STRENGTH,
+                0, 150);
+        }
+        return parentSensoryRange;
+    }
+
+    /**
+     * New: Mutates a creature's optimal temperature.
+     * @param {number} parentOptimalTemperature - The parent's optimal temperature.
+     * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
+     * @returns {number} The new mutated optimal temperature.
+     */
+    mutateOptimalTemperature(parentOptimalTemperature, mutationRate, mutationStrength) {
+        if (Math.random() < mutationRate) {
+            return clamp(parentOptimalTemperature + (Math.random() - 0.5) * mutationStrength * SIM_CONFIG.OPTIMAL_TEMPERATURE_MUTATION_STRENGTH,
+                0, 1);
+        }
+        return parentOptimalTemperature;
+    }
+
 
     /**
      * Creates a clone of the creature for elitism, resetting mutable state.
      * @returns {Creature} A new Creature instance that is a clone.
      */
     cloneForNextGeneration() {
-        const clonedCreature = new Creature(
-            Math.random() * SIM_CONFIG.WORLD_WIDTH, // New random position for next gen
-            Math.random() * SIM_CONFIG.WORLD_HEIGHT,
-            this.originalColor, // Keep original color
-            this.speed,
-            this.size,
-            this.brain, // Keep the same brain
-            this.visionRange,
-            this.lifespan, // Carry over lifespan
-            this.biomePreference // Carry over biome preference
-        );
+        const clonedCreature = new Creature({
+            x: Math.random() * SIM_CONFIG.WORLD_WIDTH, // New random position for next gen
+            y: Math.random() * SIM_CONFIG.WORLD_HEIGHT,
+            color: this.originalColor, // Keep original color
+            speed: this.speed,
+            size: this.size,
+            brain: this.brain, // Keep the same brain
+            visionRange: this.visionRange,
+            lifespan: this.lifespan, // Carry over lifespan
+            biomePreference: this.biomePreference, // Carry over biome preference
+            dietType: this.dietType, // Carry over diet type
+            attackPower: this.attackPower, // Carry over attack power
+            defense: this.defense, // Carry over defense
+            metabolismRate: this.metabolismRate, // Carry over metabolism rate
+            reproductionCooldown: this.reproductionCooldown, // Carry over reproduction cooldown
+            clutchSize: this.clutchSize, // Carry over clutch size
+            sensoryRange: this.sensoryRange, // Carry over sensory range
+            optimalTemperature: this.optimalTemperature, // Carry over optimal temperature
+        });
         clonedCreature.fitness = this.fitness; // Carry over fitness for potential re-evaluation or reference
         return clonedCreature;
     }
