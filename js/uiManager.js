@@ -181,23 +181,20 @@ export const UIManager = {
         ctx.fillStyle = '#2a2a4a'; /* Matches simulation canvas background */
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        const nodeRadius = 8;
+        const nodeRadius = 6; // Slightly smaller nodes for more space
         const horizontalSpacing = canvasWidth / 4;
 
-        const inputNodes = brain.inputNodes;
-        const hiddenNodes = brain.hiddenNodes;
-        const outputNodes = brain.outputNodes;
-
-        const inputYStep = canvasHeight / (inputNodes + 1);
-        const hiddenYStep = canvasHeight / (hiddenNodes + 1);
-        const outputYStep = canvasHeight / (outputNodes + 1);
+        // Increased vertical spacing to prevent overlap
+        const inputYStep = canvasHeight / (brain.inputNodes + 2); // +2 for top/bottom margin
+        const hiddenYStep = canvasHeight / (brain.hiddenNodes + 2);
+        const outputYStep = canvasHeight / (brain.outputNodes + 2);
 
         const nodes = { input: [], hidden: [], output: [] };
 
         // Draw input nodes
-        for (let i = 0; i < inputNodes; i++) {
+        for (let i = 0; i < brain.inputNodes; i++) {
             const x = horizontalSpacing;
-            const y = (i + 1) * inputYStep;
+            const y = (i + 1.5) * inputYStep; // Adjusted y for better centering
             nodes.input.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -205,16 +202,16 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
-            ctx.fillStyle = 'white'; // Changed to white for readability
-            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = 'white'; // Ensured white for readability
+            ctx.font = 'bold 9px Arial'; // Slightly smaller font
             ctx.textAlign = 'right';
-            ctx.fillText(inputLabels[i], x - nodeRadius - 5, y + 3);
+            ctx.fillText(inputLabels[i], x - nodeRadius - 5, y + 3); // Adjusted x for label
         }
 
         // Draw hidden nodes
-        for (let i = 0; i < hiddenNodes; i++) {
+        for (let i = 0; i < brain.hiddenNodes; i++) {
             const x = horizontalSpacing * 2;
-            const y = (i + 1) * hiddenYStep;
+            const y = (i + 1.5) * hiddenYStep; // Adjusted y for better centering
             nodes.hidden.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -225,9 +222,9 @@ export const UIManager = {
         }
 
         // Draw output nodes
-        for (let i = 0; i < outputNodes; i++) {
+        for (let i = 0; i < brain.outputNodes; i++) {
             const x = horizontalSpacing * 3;
-            const y = (i + 1) * outputYStep;
+            const y = (i + 1.5) * outputYStep; // Adjusted y for better centering
             nodes.output.push({ x, y });
             ctx.beginPath();
             ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
@@ -235,34 +232,36 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
-            ctx.fillStyle = 'white'; // Changed to white for readability
-            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = 'white'; // Ensured white for readability
+            ctx.font = 'bold 9px Arial'; // Slightly smaller font
             ctx.textAlign = 'left';
-            ctx.fillText(outputLabels[i], x + nodeRadius + 5, y + 3);
+            ctx.fillText(outputLabels[i], x + nodeRadius + 5, y + 3); // Adjusted x for label
         }
 
         // Draw connections (weights) from input to hidden layer
-        for (let i = 0; i < inputNodes; i++) {
-            for (let j = 0; j < hiddenNodes; j++) {
+        for (let i = 0; i < brain.inputNodes; i++) {
+            for (let j = 0; j < brain.hiddenNodes; j++) {
                 const weight = brain.weights_ih[i][j];
                 ctx.beginPath();
                 ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
                 ctx.lineTo(nodes.hidden[j].x, nodes.hidden[j].y);
-                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight / 2), 0, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight / 2), 0, 1)})`;
-                ctx.lineWidth = Math.abs(weight) * 1.5;
+                // Reduced and clamped line width for better clarity
+                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.1, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.1, 1)})`;
+                ctx.lineWidth = clamp(Math.abs(weight) * 0.8, 0.5, 2.5); // Max line width 2.5px
                 ctx.stroke();
             }
         }
 
         // Draw connections (weights) from hidden to output layer
-        for (let i = 0; i < hiddenNodes; i++) {
-            for (let j = 0; j < outputNodes; j++) {
+        for (let i = 0; i < brain.hiddenNodes; i++) {
+            for (let j = 0; j < brain.outputNodes; j++) {
                 const weight = brain.weights_ho[i][j];
                 ctx.beginPath();
                 ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
                 ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
-                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight / 2), 0, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight / 2), 0, 1)})`;
-                ctx.lineWidth = Math.abs(weight) * 1.5;
+                // Reduced and clamped line width for better clarity
+                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.1, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.1, 1)})`;
+                ctx.lineWidth = clamp(Math.abs(weight) * 0.8, 0.5, 2.5); // Max line width 2.5px
                 ctx.stroke();
             }
         }
