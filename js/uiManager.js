@@ -556,7 +556,7 @@ export const UIManager = {
         const cellHeight = mapHeight / SIM_CONFIG.BIOME_GRID_Y;
         for (let y = 0; y < SIM_CONFIG.BIOME_GRID_Y; y++) {
             for (let x = 0; x < SIM_CONFIG.BIOME_GRID_X; x++) {
-                const biomeType = BIOME_TYPES[biomeMap[y][x]];
+                const biomeType = BIOME_TYPES[this.biomeMap[y][x]];
                 this.miniMapCtx.fillStyle = biomeType.color;
                 this.miniMapCtx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
             }
