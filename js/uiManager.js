@@ -116,16 +116,25 @@ export const UIManager = {
                                 ];
                                 const outputLabels = ["Turn Rate", "Speed Adj"];
                                 this.drawNeuralNetwork(this.brainContexts[index], display.brain, inputLabels, outputLabels);
+                            } else {
+                                // If no brain, just clear and fill background
+                                this.brainContexts[index].clearRect(0, 0, canvas.width, canvas.height);
+                                this.brainContexts[index].fillStyle = '#2a2a4a';
+                                this.brainContexts[index].fillRect(0, 0, canvas.width, canvas.height);
                             }
                         }
                     }
                 });
                 resizeObserver.observe(display.container);
 
-                // Initial setup for brain canvas dimensions
+                // Initial setup for brain canvas dimensions and drawing
                 const canvas = display.canvas;
                 canvas.width = display.container.clientWidth;
                 canvas.height = display.container.clientHeight;
+                // Draw initial empty state or placeholder
+                this.brainContexts[index].clearRect(0, 0, canvas.width, canvas.height);
+                this.brainContexts[index].fillStyle = '#2a2a4a';
+                this.brainContexts[index].fillRect(0, 0, canvas.width, canvas.height);
             });
         } else {
             console.warn("ResizeObserver is not supported by this browser. Neural network canvases will not dynamically resize.");
@@ -222,6 +231,9 @@ export const UIManager = {
         ctx.fillStyle = '#2a2a4a'; // Matches simulation canvas background
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+        // Debugging logs
+        console.log(`drawNeuralNetwork: Canvas size - W:${canvasWidth}, H:${canvasHeight}`);
+
         // Fixed padding for more predictable layout
         const paddingX = 20; // 20px padding on left/right
         const paddingY = 20; // 20px padding on top/bottom
@@ -230,6 +242,10 @@ export const UIManager = {
         const effectiveCanvasHeight = canvasHeight - (2 * paddingY);
         const startX = paddingX;
         const startY = paddingY;
+
+        // Debugging logs for effective drawing area
+        console.log(`Effective Drawing Area: W:${effectiveCanvasWidth}, H:${effectiveCanvasHeight}, StartX:${startX}, StartY:${startY}`);
+
 
         const inputNodes = brain.inputNodes;
         const hiddenNodes = brain.hiddenNodes;
@@ -265,6 +281,9 @@ export const UIManager = {
             const bottomMostY = startY + effectiveCanvasHeight - nodeRadius;
             const usableDrawingHeight = bottomMostY - topMostY;
             
+            // Ensure usableDrawingHeight is not negative
+            if (usableDrawingHeight <= 0) return startY + effectiveCanvasHeight / 2;
+
             return topMostY + (index / (numNodesInLayer - 1)) * usableDrawingHeight;
         };
 
@@ -310,7 +329,7 @@ export const UIManager = {
             const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
             const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
             ctx.beginPath();
-            ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); 
+            ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); // Increased offset
             ctx.fillStyle = biasColorH;
             ctx.fill();
         }
