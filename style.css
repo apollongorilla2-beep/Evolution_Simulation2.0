@@ -251,6 +251,7 @@ canvas.simulator {
     /* NEW: Explicitly prevent growing and shrinking as a flex item */
     flex-grow: 0; 
     flex-shrink: 0;
+    flex-basis: auto; /* Ensure flex basis is auto, letting height take precedence */
     
     /* Set a default height to prevent stretching, overridden by manual resize */
     height: 250px; /* Adjust this value as needed for a good default visual size */
@@ -260,7 +261,7 @@ canvas.simulator {
 
     /* Resizable properties */
     resize: both; /* Allow resizing in both directions */
-    overflow: auto; /* Essential for resize to work for its own content */
+    overflow: hidden; /* NEW: Hide any potential overflow, as JS drawing should fit */
     min-width: 200px; /* Prevent it from becoming too small */
     min-height: 150px; /* Prevent it from becoming too small */
 }
