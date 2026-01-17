@@ -127,11 +127,10 @@ export const UIManager = {
                 });
                 resizeObserver.observe(display.container);
 
-                // Initial setup for brain canvas dimensions and drawing
+                // Initial setup for brain canvas dimensions and drawing (placeholder)
                 const canvas = display.canvas;
                 canvas.width = display.container.clientWidth;
                 canvas.height = display.container.clientHeight;
-                // Draw initial empty state or placeholder
                 this.brainContexts[index].clearRect(0, 0, canvas.width, canvas.height);
                 this.brainContexts[index].fillStyle = '#2a2a4a';
                 this.brainContexts[index].fillRect(0, 0, canvas.width, canvas.height);
@@ -223,7 +222,14 @@ export const UIManager = {
      * @param {string[]} outputLabels - Labels for output nodes.
      */
     drawNeuralNetwork(ctx, brain, inputLabels, outputLabels) {
-        if (!ctx || !brain) return;
+        if (!ctx || !brain) {
+            // Fill background even if no brain to prevent transparent/empty look
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.fillStyle = '#2a2a4a';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            console.log("drawNeuralNetwork: No brain or context, filling background."); // Debug
+            return;
+        }
 
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
@@ -231,8 +237,10 @@ export const UIManager = {
         ctx.fillStyle = '#2a2a4a'; // Matches simulation canvas background
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // Debugging logs
-        console.log(`drawNeuralNetwork: Canvas size - W:${canvasWidth}, H:${canvasHeight}`);
+        // Debugging logs - CRITICAL FOR DIAGNOSIS
+        // Assuming brain has an ID for better debugging
+        console.log(`drawNeuralNetwork for brain: ${brain.id || 'N/A'}`); 
+        console.log(`Canvas size - W:${canvasWidth}, H:${canvasHeight}`);
 
         // Fixed padding for more predictable layout
         const paddingX = 20; // 20px padding on left/right
@@ -246,10 +254,19 @@ export const UIManager = {
         // Debugging logs for effective drawing area
         console.log(`Effective Drawing Area: W:${effectiveCanvasWidth}, H:${effectiveCanvasHeight}, StartX:${startX}, StartY:${startY}`);
 
+        // Handle cases where effective drawing area is too small
+        if (effectiveCanvasWidth <= 0 || effectiveCanvasHeight <= 0) {
+            console.warn("Effective canvas drawing area is too small to render neural network. Skipping draw.");
+            return; // Exit if no space to draw
+        }
+
 
         const inputNodes = brain.inputNodes;
         const hiddenNodes = brain.hiddenNodes;
         const outputNodes = brain.outputNodes;
+
+        // Debugging for node counts
+        console.log(`Nodes: Input=${inputNodes}, Hidden=${hiddenNodes}, Output=${outputNodes}`);
 
         // Calculate dynamic node radius based on the most crowded layer
         const maxNodesInAnyLayer = Math.max(inputNodes, hiddenNodes, outputNodes);
@@ -260,6 +277,7 @@ export const UIManager = {
         const maxNodeRadius = 12;
         calculatedNodeRadius = clamp(calculatedNodeRadius, minNodeRadius, maxNodeRadius);
         const nodeRadius = calculatedNodeRadius;
+        console.log(`Node Radius: ${nodeRadius}`); // Debug
 
         const biasIndicatorRadius = clamp(nodeRadius / 2.5, 1.5, 4);
 
@@ -276,13 +294,17 @@ export const UIManager = {
             if (numNodesInLayer === 1) {
                 return startY + effectiveCanvasHeight / 2; // Center single node
             }
-            // Distribute nodes evenly within the effective height, accounting for node radius
+            // Distribute nodes evenly within the effective height, accounting for nodeRadius at top/bottom
             const topMostY = startY + nodeRadius;
             const bottomMostY = startY + effectiveCanvasHeight - nodeRadius;
-            const usableDrawingHeight = bottomMostY - topMostY;
+            let usableDrawingHeight = bottomMostY - topMostY;
             
-            // Ensure usableDrawingHeight is not negative
-            if (usableDrawingHeight <= 0) return startY + effectiveCanvasHeight / 2;
+            // Ensure usableDrawingHeight is not negative or zero
+            if (usableDrawingHeight <= 0) {
+                usableDrawingHeight = 1; // Give it a tiny bit of height to avoid division by zero issues
+                // Potentially center all nodes in the middle if no usable height
+                return startY + effectiveCanvasHeight / 2; 
+            }
 
             return topMostY + (index / (numNodesInLayer - 1)) * usableDrawingHeight;
         };
@@ -409,6 +431,7 @@ export const UIManager = {
             const display = this.brainDisplays[i];
             const creature = sortedCreaturesForDisplay[i];
 
+            console.log(`updateBrainDisplays: Processing display ${i + 1}. Creature exists: ${!!creature}`); // Debug
             if (creature) {
                 const colorBox = display.title.querySelector('.color-box');
                 colorBox.style.backgroundColor = creature.originalColor; // Show original color
@@ -416,6 +439,7 @@ export const UIManager = {
 
                 // Store the brain reference for the ResizeObserver to use
                 display.brain = creature.brain;
+                console.log(`updateBrainDisplays: Display ${i + 1} assigned brain with ID: ${creature.brain.id || 'N/A'}`); // Debug
 
                 // Manually set canvas dimensions and redraw to match current container size
                 const canvas = display.canvas;
@@ -435,6 +459,7 @@ export const UIManager = {
                     this.brainContexts[i].fillRect(0, 0, canvas.width, canvas.height);
                 }
                 display.brain = null; // Clear brain reference
+                console.log(`updateBrainDisplays: Display ${i + 1} has no creature, clearing brain reference.`); // Debug
             }
         }
     },
