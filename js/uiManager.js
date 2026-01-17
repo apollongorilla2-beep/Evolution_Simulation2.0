@@ -64,6 +64,13 @@ export const UIManager = {
     miniMapCanvas: document.getElementById('miniMapCanvas'), // New mini-map canvas
     miniMapCtx: null,
 
+    // New: Overlay stats elements
+    overlayGenerationCount: document.getElementById('overlayGenerationCount'),
+    overlayPopulationCount: document.getElementById('overlayPopulationCount'),
+    overlayGenerationProgress: document.getElementById('overlayGenerationProgress'),
+    overlayCurrentTemperature: document.getElementById('overlayCurrentTemperature'),
+
+
     /**
      * Initializes the UI elements and their contexts.
      */
@@ -92,6 +99,7 @@ export const UIManager = {
      */
     updateGenerationCount(count) {
         if (this.generationCountSpan) this.generationCountSpan.textContent = count;
+        if (this.overlayGenerationCount) this.overlayGenerationCount.textContent = count; // Update overlay
     },
 
     /**
@@ -100,6 +108,7 @@ export const UIManager = {
      */
     updatePopulationCount(count) {
         if (this.populationCountSpan) this.populationCountSpan.textContent = count;
+        if (this.overlayPopulationCount) this.overlayPopulationCount.textContent = count; // Update overlay
     },
 
     /**
@@ -108,6 +117,15 @@ export const UIManager = {
      */
     updateGenerationProgress(progress) {
         if (this.generationProgressSpan) this.generationProgressSpan.textContent = `${progress}%`;
+        if (this.overlayGenerationProgress) this.overlayGenerationProgress.textContent = `${progress}%`; // Update overlay
+    },
+
+    /**
+     * New: Updates the current world temperature in the overlay.
+     * @param {number} temperature - The normalized current world temperature.
+     */
+    updateCurrentTemperature(temperature) {
+        if (this.overlayCurrentTemperature) this.overlayCurrentTemperature.textContent = temperature.toFixed(2);
     },
 
     /**
@@ -168,7 +186,7 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
-            ctx.fillStyle = '#e0e0e0';
+            ctx.fillStyle = 'white'; // Changed to white for readability
             ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'right';
             ctx.fillText(inputLabels[i], x - nodeRadius - 5, y + 3);
@@ -198,7 +216,7 @@ export const UIManager = {
             ctx.fill();
             ctx.strokeStyle = '#555';
             ctx.stroke();
-            ctx.fillStyle = '#e0e0e0';
+            ctx.fillStyle = 'white'; // Changed to white for readability
             ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'left';
             ctx.fillText(outputLabels[i], x + nodeRadius + 5, y + 3);
@@ -271,7 +289,7 @@ export const UIManager = {
     },
 
     /**
-     * New: Displays detailed information about a clicked creature.
+     * Displays detailed information about a clicked creature.
      * @param {Creature} creature - The creature to display.
      * @param {number[][]} biomeMap - The current biome map.
      */
@@ -306,7 +324,7 @@ export const UIManager = {
     },
 
     /**
-     * New: Hides the creature information panel.
+     * Hides the creature information panel.
      */
     hideCreatureInfo() {
         if (this.creatureInfoPanel) {
@@ -315,7 +333,7 @@ export const UIManager = {
     },
 
     /**
-     * New: Draws the mini-map.
+     * Draws the mini-map.
      * @param {Creature[]} creatures - Array of all creatures.
      * @param {number[][]} biomeMap - The biome map.
      */
