@@ -27,6 +27,7 @@ export class Creature {
         this.isAlive = true;
         this.fitness = 0; // Stored fitness from previous generation for selection and adaptive mutation
         this.visionRange = visionRange;
+        this.wallHits = 0; // Track wall hits for fitness penalty
 
         this.brain = brain || new NeuralNetwork(
             SIM_CONFIG.BRAIN_INPUT_NODES,
@@ -93,7 +94,11 @@ export class Creature {
         wallYDistanceInput = wallYDistanceInput / (SIM_CONFIG.WORLD_HEIGHT / 2);
 
         // Biome type input (normalized index)
-        const currentBiomeIndex = biomeMap[Math.floor(this.y / (SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y))][Math.floor(this.x / (SIM_CONFIG.WORLD_WIDTH / SIM_CONFIG.BIOME_GRID_X))];
+        const biomeX = Math.floor(this.x / (SIM_CONFIG.WORLD_WIDTH / SIM_CONFIG.BIOME_GRID_X));
+        const biomeY = Math.floor(this.y / (SIM_CONFIG.WORLD_HEIGHT / SIM_CONFIG.BIOME_GRID_Y));
+        const clampedBiomeX = clamp(biomeX, 0, SIM_CONFIG.BIOME_GRID_X - 1);
+        const clampedBiomeY = clamp(biomeY, 0, SIM_CONFIG.BIOME_GRID_Y - 1);
+        const currentBiomeIndex = biomeMap[clampedBiomeY][clampedBiomeX];
         const biomeInput = currentBiomeIndex / (BIOME_TYPES.length - 1);
 
         // Vision Range input (normalized)
@@ -201,6 +206,7 @@ export class Creature {
         }
         if (hitWall) {
             this.energy -= SIM_CONFIG.WALL_HIT_PENALTY;
+            this.wallHits++; // Increment wall hit counter
         }
 
         // Add current position to trail
@@ -252,6 +258,9 @@ export class Creature {
         // Reward for efficient vision range
         baseFitness -= Math.abs(this.visionRange - SIM_CONFIG.INITIAL_VISION_RANGE) * 0.5; // Small penalty for deviating from initial vision
 
+        // New: Penalty for frequent wall collisions
+        baseFitness -= this.wallHits * SIM_CONFIG.WALL_COLLISION_FITNESS_PENALTY;
+
         return Math.max(0, baseFitness); // Fitness cannot be negative
     }
 
@@ -259,17 +268,21 @@ export class Creature {
      * Mutates the creature's color for visual diversity.
      * @param {string} originalColor - The original color string (e.g., '#RRGGBB').
      * @param {number} mutationRate - The current mutation rate.
+     * @param {number} mutationStrength - The current mutation strength.
      * @returns {string} The new mutated color.
      */
-    mutateColor(originalColor, mutationRate) {
+    mutateColor(originalColor, mutationRate, mutationStrength) {
         const hex = originalColor.substring(1);
         let r = parseInt(hex.substring(0, 2), 16);
         let g = parseInt(hex.substring(2, 4), 16);
         let b = parseInt(hex.substring(4, 6), 16);
 
-        if (Math.random() < mutationRate * 2) r = clamp(r + Math.floor((Math.random() - 0.5) * 60), 0, 255);
-        if (Math.random() < mutationRate * 2) g = clamp(g + Math.floor((Math.random() - 0.5) * 60), 0, 255);
-        if (Math.random() < mutationRate * 2) b = clamp(b + Math.floor((Math.random() - 0.5) * 60), 0, 255);
+        // Adjust color mutation based on mutationStrength
+        const colorMutationMagnitude = 60 * mutationStrength; // Link to mutation strength
+
+        if (Math.random() < mutationRate * 2) r = clamp(r + Math.floor((Math.random() - 0.5) * colorMutationMagnitude), 0, 255);
+        if (Math.random() < mutationRate * 2) g = clamp(g + Math.floor((Math.random() - 0.5) * colorMutationMagnitude), 0, 255);
+        if (Math.random() < mutationRate * 2) b = clamp(b + Math.floor((Math.random() - 0.5) * colorMutationMagnitude), 0, 255);
 
         return '#' +
             Math.round(r).toString(16).padStart(2, '0') +
@@ -289,5 +302,23 @@ export class Creature {
             return clamp(parentVisionRange + (Math.random() - 0.5) * mutationStrength * 50, 50, 300);
         }
         return parentVisionRange;
+    }
+
+    /**
+     * Creates a clone of the creature for elitism, resetting mutable state.
+     * @returns {Creature} A new Creature instance that is a clone.
+     */
+    cloneForNextGeneration() {
+        const clonedCreature = new Creature(
+            Math.random() * SIM_CONFIG.WORLD_WIDTH, // New random position for next gen
+            Math.random() * SIM_CONFIG.WORLD_HEIGHT,
+            this.originalColor, // Keep original color
+            this.speed,
+            this.size,
+            this.brain, // Keep the same brain
+            this.visionRange
+        );
+        clonedCreature.fitness = this.fitness; // Carry over fitness for potential re-evaluation or reference
+        return clonedCreature;
     }
 }
