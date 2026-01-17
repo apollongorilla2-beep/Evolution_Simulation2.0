@@ -101,6 +101,8 @@ export const UIManager = {
                         if (entry.target === display.container) {
                             const { width, height } = entry.contentRect;
                             const canvas = display.canvas;
+                            
+                            // Crucially, update the canvas attributes to match the new size
                             canvas.width = width;
                             canvas.height = height;
 
@@ -119,6 +121,12 @@ export const UIManager = {
                     }
                 });
                 resizeObserver.observe(display.container);
+
+                // Initial setup for brain canvas dimensions
+                const canvas = display.canvas;
+                canvas.width = display.container.clientWidth;
+                canvas.height = display.container.clientHeight;
+
             });
         } else {
             console.warn("ResizeObserver is not supported by this browser. Neural network canvases will not dynamically resize.");
@@ -209,12 +217,7 @@ export const UIManager = {
     drawNeuralNetwork(ctx, brain, inputLabels, outputLabels) {
         if (!ctx || !brain) return; // Added check for brain
 
-        // Set canvas dimensions to match its display size for crisp rendering
-        // These are now handled by the ResizeObserver when the parent div is resized,
-        // but we ensure it's set if this function is called directly (e.g., initial draw)
-        ctx.canvas.width = ctx.canvas.clientWidth;
-        ctx.canvas.height = ctx.canvas.clientHeight;
-
+        // Canvas dimensions (attributes) are now guaranteed to match clientWidth/clientHeight
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -368,19 +371,22 @@ export const UIManager = {
                 // Store the brain reference for the ResizeObserver to use
                 display.brain = creature.brain;
 
-                // Manually set canvas dimensions and redraw for initial display
+                // Manually set canvas dimensions and redraw to match current container size
                 const canvas = display.canvas;
-                canvas.width = canvas.clientWidth;
-                canvas.height = canvas.clientHeight;
+                canvas.width = display.container.clientWidth;
+                canvas.height = display.container.clientHeight;
                 this.drawNeuralNetwork(this.brainContexts[i], creature.brain, inputLabels, outputLabels);
             } else {
                 const colorBox = display.title.querySelector('.color-box');
                 colorBox.style.backgroundColor = 'gray';
                 display.title.innerHTML = `Creature ${i + 1} <span class="color-box" style="background-color: gray;"></span>`;
                 if (this.brainContexts[i]) {
-                    this.brainContexts[i].clearRect(0, 0, display.canvas.width, display.canvas.height);
+                    const canvas = display.canvas;
+                    canvas.width = display.container.clientWidth; // Ensure canvas attributes are reset
+                    canvas.height = display.container.clientHeight;
+                    this.brainContexts[i].clearRect(0, 0, canvas.width, canvas.height);
                     this.brainContexts[i].fillStyle = '#2a2a4a';
-                    this.brainContexts[i].fillRect(0, 0, display.canvas.width, display.canvas.height);
+                    this.brainContexts[i].fillRect(0, 0, canvas.width, canvas.height);
                 }
                 display.brain = null; // Clear brain reference
             }
