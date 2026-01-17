@@ -18,7 +18,10 @@ export const SIM_CONFIG = {
     FOOD_SPAWN_RATE: 0.1, // Average number of food items to spawn per frame (if below max)
     COLLISION_RADIUS_OFFSET: 3, // Additional radius for food collision
     BRAIN_INPUT_NODES: 15, // UPDATED: Food Angle, Food Dist, Energy, Wall X Dist, Wall Y Dist, Biome Type, Vision Range, Nearest Creature Angle, Nearest Creature Dist, Biome Preference, Lifespan, Diet Type, Sensory Dist, Current Temp, Hazard Proximity
-    BRAIN_HIDDEN_NODES: 16, // Increased hidden nodes for more complexity
+    MIN_BRAIN_HIDDEN_NODES: 2, // NEW: Start with a very basic brain
+    MAX_BRAIN_HIDDEN_NODES: 20, // NEW: Maximum hidden nodes a brain can evolve to
+    HIDDEN_NODE_GROWTH_RATE_GENERATIONS: 10, // NEW: How often (in generations) a hidden node can be added
+    HIDDEN_NODE_GROWTH_AMOUNT: 1, // NEW: How many hidden nodes are added at once
     BRAIN_OUTPUT_NODES: 2, // Turn Rate, Speed Adjustment (Aggression/Avoidance can be implicit from creature sensing inputs)
     MAX_TURN_RATE: 0.4, // Max turn rate in radians
     MAX_SPEED_ADJUSTMENT: 1.0, // Max speed adjustment factor
@@ -38,6 +41,7 @@ export const SIM_CONFIG = {
     DEFAULT_INITIAL_CLUTCH_SIZE: 1, // Single offspring
     DEFAULT_INITIAL_SENSORY_RANGE: 0, // No extra sensory range
     DEFAULT_INITIAL_OPTIMAL_TEMPERATURE: 0.5, // Mild temperature
+    DEFAULT_INITIAL_ARMOR: 0, // NEW: No armor initially
 
     // Trait-specific Mutation Strengths (sliders will adjust these multipliers)
     LIFESPAN_MUTATION_STRENGTH_MULTIPLIER: 0.1,
@@ -50,6 +54,7 @@ export const SIM_CONFIG = {
     CLUTCH_SIZE_MUTATION_STRENGTH_MULTIPLIER: 0.5,
     SENSORY_RANGE_MUTATION_STRENGTH_MULTIPLIER: 10,
     OPTIMAL_TEMPERATURE_MUTATION_STRENGTH_MULTIPLIER: 0.1,
+    ARMOR_MUTATION_STRENGTH_MULTIPLIER: 0.5, // NEW: Armor mutation strength
 
     BIOME_PREFERENCE_FITNESS_MULTIPLIER: 50, // How strongly biome preference affects fitness
 
@@ -58,6 +63,7 @@ export const SIM_CONFIG = {
     COMBAT_ENERGY_COST: 5, // Energy cost per combat round
     COMBAT_DAMAGE_MULTIPLIER: 0.5, // Multiplier for attack power to actual damage
     MEAT_FROM_DEAD_CREATURE: 80, // Energy value of meat from a dead creature
+    ARMOR_DAMAGE_REDUCTION_MULTIPLIER: 0.1, // NEW: How much armor reduces incoming damage
 
     // Environmental Dynamics
     HAZARD_ENERGY_DRAIN: 0.5, // Energy drain per frame in hazardous biomes
