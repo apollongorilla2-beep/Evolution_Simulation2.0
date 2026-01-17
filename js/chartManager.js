@@ -18,6 +18,7 @@ export const ChartManager = {
     clutchSizeData: [],
     sensoryRangeData: [],
     optimalTemperatureData: [],
+    armorData: [], // NEW: Armor data array
 
 
     fitnessChart: null,
@@ -35,6 +36,7 @@ export const ChartManager = {
     clutchSizeChart: null,
     sensoryRangeChart: null,
     optimalTemperatureChart: null,
+    armorChart: null, // NEW: Armor chart instance
 
     /**
      * Initializes all Chart.js instances.
@@ -51,18 +53,18 @@ export const ChartManager = {
             scales: {
                 x: {
                     type: 'linear',
-                    title: { display: true, text: 'Generation', color: 'white' }, /* Updated to white */
-                    ticks: { color: 'white' }, /* Updated to white */
+                    title: { display: true, text: 'Generation', color: 'white' }, // Updated to white
+                    ticks: { color: 'white' }, // Updated to white
                     grid: { color: 'rgba(255,255,255,0.1)' }
                 },
                 y: {
-                    title: { display: true, text: 'Value', color: 'white' }, /* Updated to white */
-                    ticks: { color: 'white' }, /* Updated to white */
+                    title: { display: true, text: 'Value', color: 'white' }, // Updated to white
+                    ticks: { color: 'white' }, // Updated to white
                     grid: { color: 'rgba(255,255,255,0.1)' }
                 }
             },
             plugins: {
-                legend: { labels: { color: 'white' } } /* Updated to white */
+                legend: { labels: { color: 'white' } } // Updated to white
             }
         };
 
@@ -126,11 +128,15 @@ export const ChartManager = {
             type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Optimal Temperature', data: this.optimalTemperatureData, borderColor: '#FFEB3B', tension: 0.1, fill: false }] },
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 1 } } }
         });
+        this.armorChart = new Chart(document.getElementById('armorChart'), { // NEW: Armor chart
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Armor', data: this.armorData, borderColor: '#9E9E9E', tension: 0.1, fill: false }] },
+            options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 20 } } }
+        });
     },
 
     /**
      * Destroys all existing chart instances.
-     */
+     * */
     destroyCharts() {
         if (this.fitnessChart) this.fitnessChart.destroy();
         if (this.populationChart) this.populationChart.destroy();
@@ -147,6 +153,7 @@ export const ChartManager = {
         if (this.clutchSizeChart) this.clutchSizeChart.destroy();
         if (this.sensoryRangeChart) this.sensoryRangeChart.destroy();
         if (this.optimalTemperatureChart) this.optimalTemperatureChart.destroy();
+        if (this.armorChart) this.armorChart.destroy(); // NEW: Destroy armor chart
 
 
         this.fitnessChart = null;
@@ -164,11 +171,12 @@ export const ChartManager = {
         this.clutchSizeChart = null;
         this.sensoryRangeChart = null;
         this.optimalTemperatureChart = null;
+        this.armorChart = null; // NEW: Nullify armor chart
     },
 
     /**
      * Clears all chart data.
-     */
+     * */
     clearData() {
         this.generationLabels = [];
         this.fitnessData = [];
@@ -186,13 +194,14 @@ export const ChartManager = {
         this.clutchSizeData = [];
         this.sensoryRangeData = [];
         this.optimalTemperatureData = [];
+        this.armorData = []; // NEW: Clear armor data
     },
 
     /**
      * Updates data for all charts with the given creature statistics.
      * @param {Creature[]} allCreaturesInGeneration - Array of creatures from the just-finished generation.
      * @param {number} currentGenerationNumber - The current generation number.
-     */
+     * */
     updateChartsData(allCreaturesInGeneration, currentGenerationNumber) {
         if (typeof Chart === 'undefined') { return; }
 
@@ -212,6 +221,7 @@ export const ChartManager = {
         let totalClutchSize = 0;
         let totalSensoryRange = 0;
         let totalOptimalTemperature = 0;
+        let totalArmor = 0; // NEW: Total armor
 
         let aliveCreaturesCount = 0;
 
@@ -231,6 +241,7 @@ export const ChartManager = {
                 totalClutchSize += creature.clutchSize;
                 totalSensoryRange += creature.sensoryRange;
                 totalOptimalTemperature += creature.optimalTemperature;
+                totalArmor += creature.armor; // NEW: Sum armor
 
                 aliveCreaturesCount++;
             }
@@ -253,6 +264,7 @@ export const ChartManager = {
             this.clutchSizeData.push(totalClutchSize / aliveCreaturesCount);
             this.sensoryRangeData.push(totalSensoryRange / aliveCreaturesCount);
             this.optimalTemperatureData.push(totalOptimalTemperature / aliveCreaturesCount);
+            this.armorData.push(totalArmor / aliveCreaturesCount); // NEW: Push average armor
         } else {
             // If no creatures are alive, push 0 for averages
             this.speedData.push(0);
@@ -268,6 +280,7 @@ export const ChartManager = {
             this.clutchSizeData.push(0);
             this.sensoryRangeData.push(0);
             this.optimalTemperatureData.push(0);
+            this.armorData.push(0); // NEW: Push 0 for armor
         }
 
         // Limit data points to keep charts performant
@@ -288,6 +301,7 @@ export const ChartManager = {
             this.clutchSizeData.shift();
             this.sensoryRangeData.shift();
             this.optimalTemperatureData.shift();
+            this.armorData.shift(); // NEW: Shift armor data
         }
 
         this.fitnessChart.update();
@@ -305,5 +319,6 @@ export const ChartManager = {
         this.clutchSizeChart.update();
         this.sensoryRangeChart.update();
         this.optimalTemperatureChart.update();
+        this.armorChart.update(); // NEW: Update armor chart
     }
 };
