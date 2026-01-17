@@ -87,6 +87,11 @@ export const UIManager = {
         if (this.initialBiomePreferenceSlider) {
             this.initialBiomePreferenceSlider.max = BIOME_TYPES.length - 1;
         }
+        // Set max for initial armor slider
+        if (this.initialArmorSlider) {
+            this.initialArmorSlider.max = 20; // Max armor value
+        }
+
 
         // Attach event listener for closing info panel
         if (this.closeInfoPanelButton) {
@@ -240,7 +245,6 @@ export const UIManager = {
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         // Debugging logs - CRITICAL FOR DIAGNOSIS
-        // Assuming brain has an ID for better debugging
         console.log(`drawNeuralNetwork for brain: ${brain.id || 'N/A'}`); 
         console.log(`Canvas size - W:${canvasWidth}, H:${canvasHeight}`);
 
@@ -284,7 +288,7 @@ export const UIManager = {
         const biasIndicatorRadius = clamp(nodeRadius / 2.5, 1.5, 4);
 
         // Dynamic horizontal spacing based on effective width
-        const horizontalSpacing = effectiveCanvasWidth / (brain.inputNodes > 0 && brain.outputNodes > 0 ? 3 : 2);
+        const horizontalSpacing = effectiveCanvasWidth / (brain.inputNodes > 0 && brain.outputNodes > 0 && hiddenNodes > 0 ? 3 : (inputNodes > 0 && outputNodes > 0 ? 2 : 1));
 
         const nodes = { input: [], hidden: [], output: [] };
 
@@ -330,37 +334,39 @@ export const UIManager = {
             ctx.fillText(inputLabels[i], x - nodeRadius - 5, y + (nodeRadius * 0.3)); 
         }
 
-        // Draw hidden nodes
-        for (let i = 0; i < hiddenNodes; i++) {
-            const x = startX + horizontalSpacing;
-            const y = calculateYPosition(i, hiddenNodes);
-            nodes.hidden.push({ x, y });
-            ctx.beginPath();
-            ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = '#03DAC6';
-            ctx.fill();
-            ctx.strokeStyle = '#555';
-            ctx.stroke();
+        // Draw hidden nodes (only if hiddenNodes > 0)
+        if (hiddenNodes > 0) {
+            for (let i = 0; i < hiddenNodes; i++) {
+                const x = startX + horizontalSpacing;
+                const y = calculateYPosition(i, hiddenNodes);
+                nodes.hidden.push({ x, y });
+                ctx.beginPath();
+                ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#03DAC6';
+                ctx.fill();
+                ctx.strokeStyle = '#555';
+                ctx.stroke();
 
-            // Hidden Node Labels (e.g., H1, H2) - adjusted offset and increased min font size
-            ctx.fillStyle = 'white';
-            ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 14)}px Arial`; // Increased min font size, slightly smaller max
-            ctx.textAlign = 'center';
-            ctx.fillText(`H${i + 1}`, x, y + (nodeRadius * 0.3));
+                // Hidden Node Labels (e.g., H1, H2) - adjusted offset and increased min font size
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${clamp(nodeRadius * 1.1, 7, 14)}px Arial`; // Increased min font size, slightly smaller max
+                ctx.textAlign = 'center';
+                ctx.fillText(`H${i + 1}`, x, y + (nodeRadius * 0.3));
 
-            // Bias Indicator for Hidden Nodes - adjusted offset
-            const biasH = brain.bias_h[i];
-            const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
-            const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
-            ctx.beginPath();
-            ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); // Increased offset
-            ctx.fillStyle = biasColorH;
-            ctx.fill();
+                // Bias Indicator for Hidden Nodes - adjusted offset
+                const biasH = brain.bias_h[i];
+                const biasColorH = biasH > 0 ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
+                const biasMagnitudeH = clamp(Math.abs(biasH) * (nodeRadius / 3), 0.5, biasIndicatorRadius);
+                ctx.beginPath();
+                ctx.arc(x + nodeRadius + (nodeRadius * 0.5), y, biasMagnitudeH, 0, Math.PI * 2); // Increased offset
+                ctx.fillStyle = biasColorH;
+                ctx.fill();
+            }
         }
 
         // Draw output nodes
         for (let i = 0; i < outputNodes; i++) {
-            const x = startX + horizontalSpacing * 2;
+            const x = startX + horizontalSpacing * (hiddenNodes > 0 ? 2 : 1); // Adjust x if no hidden layer
             const y = calculateYPosition(i, outputNodes);
             nodes.output.push({ x, y });
             ctx.beginPath();
@@ -386,29 +392,45 @@ export const UIManager = {
             ctx.fill();
         }
 
-        // Draw connections (weights) from input to hidden layer
-        for (let i = 0; i < inputNodes; i++) {
-            for (let j = 0; j < hiddenNodes; j++) {
-                const weight = brain.weights_ih[i][j];
-                ctx.beginPath();
-                ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
-                ctx.lineTo(nodes.hidden[j].x, nodes.hidden[j].y);
-                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
-                ctx.lineWidth = clamp(Math.abs(weight) * (nodeRadius / 3), 0.8, 4); // Scale line width with node radius
-                ctx.stroke();
+        // Draw connections (weights)
+        if (hiddenNodes > 0) { // If hidden layer exists
+            // Input to hidden layer
+            for (let i = 0; i < inputNodes; i++) {
+                for (let j = 0; j < hiddenNodes; j++) {
+                    const weight = brain.weights_ih[i][j];
+                    ctx.beginPath();
+                    ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
+                    ctx.lineTo(nodes.hidden[j].x, nodes.hidden[j].y);
+                    ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
+                    ctx.lineWidth = clamp(Math.abs(weight) * (nodeRadius / 3), 0.8, 4); // Scale line width with node radius
+                    ctx.stroke();
+                }
             }
-        }
 
-        // Draw connections (weights) from hidden to output layer
-        for (let i = 0; i < hiddenNodes; i++) {
-            for (let j = 0; j < outputNodes; j++) {
-                const weight = brain.weights_ho[i][j];
-                ctx.beginPath();
-                ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
-                ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
-                ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
-                ctx.lineWidth = clamp(Math.abs(weight) * (nodeRadius / 3), 0.8, 4); // Scale line width with node radius
-                ctx.stroke();
+            // Hidden to output layer
+            for (let i = 0; i < hiddenNodes; i++) {
+                for (let j = 0; j < outputNodes; j++) {
+                    const weight = brain.weights_ho[i][j];
+                    ctx.beginPath();
+                    ctx.moveTo(nodes.hidden[i].x, nodes.hidden[i].y);
+                    ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
+                    ctx.strokeStyle = weight > 0 ? `rgba(0, 255, 0, ${clamp(Math.abs(weight), 0.2, 1)})` : `rgba(255, 0, 0, ${clamp(Math.abs(weight), 0.2, 1)})`;
+                    ctx.lineWidth = clamp(Math.abs(weight) * (nodeRadius / 3), 0.8, 4); // Scale line width with node radius
+                    ctx.stroke();
+                }
+            }
+        } else { // Direct connections if no hidden layer (simplified for visualization)
+            for (let i = 0; i < inputNodes; i++) {
+                for (let j = 0; j < outputNodes; j++) {
+                    // For a true direct connection, you'd need weights_io.
+                    // Here, we'll draw a symbolic connection to show layers exist.
+                    ctx.beginPath();
+                    ctx.moveTo(nodes.input[i].x, nodes.input[i].y);
+                    ctx.lineTo(nodes.output[j].x, nodes.output[j].y);
+                    ctx.strokeStyle = `rgba(150, 150, 150, 0.1)`; // Very faint symbolic connection
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
             }
         }
     },
@@ -441,7 +463,7 @@ export const UIManager = {
 
                 // Store the brain reference for the ResizeObserver to use
                 display.brain = creature.brain;
-                console.log(`updateBrainDisplays: Display ${i + 1} assigned brain with ID: ${creature.id || 'N/A'}, Hidden Nodes: ${creature.brain.hiddenNodes}`); // Debug
+                console.log(`updateBrainDisplays: Display ${i + 1} assigned brain with ID: ${creature.brain.id || 'N/A'}, Hidden Nodes: ${creature.brain.hiddenNodes}`); // Debug
 
                 // Manually set canvas dimensions and redraw to match current container size
                 const canvas = display.canvas;
