@@ -36,18 +36,18 @@ export const ChartManager = {
             scales: {
                 x: {
                     type: 'linear',
-                    title: { display: true, text: 'Generation', color: 'white' },
-                    ticks: { color: 'white' },
+                    title: { display: true, text: 'Generation', color: '#b0b0b0' }, /* Updated text color */
+                    ticks: { color: '#b0b0b0' }, /* Updated tick color */
                     grid: { color: 'rgba(255,255,255,0.1)' }
                 },
                 y: {
-                    title: { display: true, text: 'Value', color: 'white' },
-                    ticks: { color: 'white' },
+                    title: { display: true, text: 'Value', color: '#b0b0b0' }, /* Updated text color */
+                    ticks: { color: '#b0b0b0' }, /* Updated tick color */
                     grid: { color: 'rgba(255,255,255,0.1)' }
                 }
             },
             plugins: {
-                legend: { labels: { color: 'white' } }
+                legend: { labels: { color: '#e0e0e0' } } /* Updated legend label color */
             }
         };
 
@@ -55,35 +55,35 @@ export const ChartManager = {
         this.destroyCharts();
 
         this.fitnessChart = new Chart(document.getElementById('fitnessChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Fitness', data: this.fitnessData, borderColor: 'rgb(255, 159, 64)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Fitness', data: this.fitnessData, borderColor: '#FFC107', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
         });
         this.populationChart = new Chart(document.getElementById('populationChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Population (Alive)', data: this.populationData, borderColor: 'rgb(75, 192, 192)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Population (Alive)', data: this.populationData, borderColor: '#03DAC6', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: SIM_CONFIG.FIXED_POPULATION_SIZE * 1.1 } } }
         });
         this.speedChart = new Chart(document.getElementById('speedChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Speed', data: this.speedData, borderColor: 'rgb(255, 99, 132)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Speed', data: this.speedData, borderColor: '#CF6679', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: SIM_CONFIG.BASE_SPEED * 2.5 } } }
         });
         this.sizeChart = new Chart(document.getElementById('sizeChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Size', data: this.sizeData, borderColor: 'rgb(54, 162, 235)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Average Size', data: this.sizeData, borderColor: '#BB86FC', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: SIM_CONFIG.CREATURE_BASE_RADIUS * 3 } } }
         });
         this.foodEatenChart = new Chart(document.getElementById('foodEatenChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Food Eaten', data: this.foodEatenData, borderColor: 'rgb(255, 205, 86)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Food Eaten', data: this.foodEatenData, borderColor: '#4CAF50', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
         });
         this.visionRangeChart = new Chart(document.getElementById('visionRangeChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Vision Range', data: this.visionRangeData, borderColor: 'rgb(153, 102, 255)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Vision Range', data: this.visionRangeData, borderColor: '#3a6ea5', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
         });
         this.lifespanChart = new Chart(document.getElementById('lifespanChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Lifespan (frames)', data: this.lifespanData, borderColor: 'rgb(0, 123, 255)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Lifespan (frames)', data: this.lifespanData, borderColor: '#b88b4a', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0 } } }
         });
         this.biomePreferenceChart = new Chart(document.getElementById('biomePreferenceChart'), {
-            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Biome Preference Index', data: this.biomePreferenceData, borderColor: 'rgb(255, 193, 7)', tension: 0.1, fill: false }] },
+            type: 'line', data: { labels: this.generationLabels, datasets: [{ label: 'Avg Biome Preference Index', data: this.biomePreferenceData, borderColor: '#6200EE', tension: 0.1, fill: false }] }, /* Updated borderColor */
             options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: BIOME_TYPES.length - 1, stepSize: 1 } } }
         });
     },
