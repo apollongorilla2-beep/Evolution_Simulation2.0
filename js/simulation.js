@@ -136,26 +136,25 @@ export class Simulation {
             this.showBiomes = !this.showBiomes;
             UIManager.toggleBiomesButton.textContent = this.showBiomes ? 'Hide Biomes' : 'Show Biomes';
         });
-        UIManager.toggleHealthBarsButton.addEventListener('click', () => { // New button event listener
+        UIManager.toggleHealthBarsButton.addEventListener('click', () => {
             this.showHealthBars = !this.showHealthBars;
             UIManager.toggleHealthBarsButton.textContent = this.showHealthBars ? 'Hide Health Bars' : 'Show Health Bars';
         });
 
-        // New: Event listener for clicking on the main canvas
         this.canvas.addEventListener('click', (e) => {
-            if (this.isPaused) { // Only allow creature inspection when paused
+            if (this.isPaused) {
                 const rect = this.canvas.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
 
                 for (const creature of this.creatures) {
                     const dist = Math.sqrt((mouseX - creature.x)**2 + (mouseY - creature.y)**2);
-                    if (dist < creature.size) { // Clicked on a creature
+                    if (dist < creature.size) {
                         UIManager.showCreatureInfo(creature, this.biomeMap);
                         return;
                     }
                 }
-                UIManager.hideCreatureInfo(); // Hide if no creature clicked
+                UIManager.hideCreatureInfo();
             }
         });
     }
@@ -167,11 +166,10 @@ export class Simulation {
         this.isPaused = !this.isPaused;
         UIManager.togglePauseButton.textContent = this.isPaused ? 'Resume Simulation' : 'Pause Simulation';
         if (!this.isPaused) {
-            // If resuming, reset lastFrameTime to prevent a large jump after being paused
             this.lastFrameTime = performance.now();
-            this.gameLoop(this.lastFrameTime); // Immediately request a new frame
+            this.gameLoop(this.lastFrameTime);
         } else {
-            UIManager.hideCreatureInfo(); // Hide info panel if pausing
+            UIManager.hideCreatureInfo();
         }
     }
 
@@ -259,16 +257,15 @@ export class Simulation {
                 const biome = BIOME_TYPES[this.biomeMap[clampedY][clampedX]];
 
                 if (Math.random() < biome.food_spawn_chance * SIM_CONFIG.FOOD_SPAWN_MULTIPLIER) {
-                    // New: Randomize food energy value and toxicity
                     const energyValue = SIM_CONFIG.ENERGY_FROM_FOOD + (Math.random() - 0.5) * 50;
                     const isToxic = Math.random() < SIM_CONFIG.FOOD_TOXICITY_CHANCE;
-                    this.food.push(new Food(randomX, randomY, 'plant', energyValue, isToxic)); // Default to 'plant'
+                    this.food.push(new Food(randomX, randomY, 'plant', energyValue, isToxic));
                     placed = true;
                 }
                 attempts++;
             }
 
-            if (!placed) { // If unable to place in a preferred biome after attempts, place anywhere
+            if (!placed) {
                 const energyValue = SIM_CONFIG.ENERGY_FROM_FOOD + (Math.random() - 0.5) * 50;
                 const isToxic = Math.random() < SIM_CONFIG.FOOD_TOXICITY_CHANCE;
                 this.food.push(new Food(randomX, randomY, 'plant', energyValue, isToxic));
@@ -281,11 +278,10 @@ export class Simulation {
      */
     replenishFoodGradually() {
         if (this.food.length < this.foodCount) {
-            // Spawn a few food items per frame based on FOOD_SPAWN_RATE
             const foodToSpawn = Math.min(this.foodCount - this.food.length, Math.floor(SIM_CONFIG.FOOD_SPAWN_RATE));
             if (foodToSpawn > 0) {
                 this.spawnFood(foodToSpawn);
-            } else if (Math.random() < SIM_CONFIG.FOOD_SPAWN_RATE % 1) { // Handle fractional spawn rate
+            } else if (Math.random() < SIM_CONFIG.FOOD_SPAWN_RATE % 1) {
                 this.spawnFood(1);
             }
         }
@@ -299,19 +295,18 @@ export class Simulation {
         ChartManager.clearData();
         ChartManager.initCharts();
         this.generateBiomeMap();
-        UIManager.hideCreatureInfo(); // Hide info panel on new simulation
+        UIManager.hideCreatureInfo();
 
         const initialCreatures = Array(SIM_CONFIG.FIXED_POPULATION_SIZE).fill(null).map(() => new Creature({
             x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
             y: Math.random() * SIM_CONFIG.WORLD_HEIGHT,
-            color: null, // random color
-            speed: SIM_CONFIG.BASE_SPEED + (Math.random() - 0.5), // initial varied speed
-            size: SIM_CONFIG.CREATURE_BASE_RADIUS + (Math.random() - 0.5) * 2, // initial varied size
-            brain: null, // new brain
-            visionRange: this.visionRange + (Math.random() - 0.5) * 50, // initial varied vision range
-            lifespan: this.initialLifespanSeconds * 60 + (Math.random() - 0.5) * 60 * 10, // Varied initial lifespan
-            biomePreference: clamp(this.initialBiomePreference + Math.round((Math.random() - 0.5) * 2), 0, BIOME_TYPES.length - 1), // Varied initial biome preference
-            // New initial traits
+            color: null,
+            speed: SIM_CONFIG.BASE_SPEED + (Math.random() - 0.5),
+            size: SIM_CONFIG.CREATURE_BASE_RADIUS + (Math.random() - 0.5) * 2,
+            brain: null,
+            visionRange: this.visionRange + (Math.random() - 0.5) * 50,
+            lifespan: this.initialLifespanSeconds * 60 + (Math.random() - 0.5) * 60 * 10,
+            biomePreference: clamp(this.initialBiomePreference + Math.round((Math.random() - 0.5) * 2), 0, BIOME_TYPES.length - 1),
             dietType: this.initialDietType,
             attackPower: this.initialAttackPower + (Math.random() - 0.5) * 5,
             defense: this.initialDefense + (Math.random() - 0.5) * 3,
@@ -319,19 +314,19 @@ export class Simulation {
             reproductionCooldown: this.initialReproductionCooldown + (Math.random() - 0.5) * 20,
             clutchSize: this.initialClutchSize + Math.round((Math.random() - 0.5)),
             sensoryRange: this.initialSensoryRange + (Math.random() - 0.5) * 20,
-            optimalTemperature: SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE + (Math.random() - 0.5) * 0.2, // Varied optimal temperature
+            optimalTemperature: SIM_CONFIG.INITIAL_OPTIMAL_TEMPERATURE + (Math.random() - 0.5) * 0.2,
         }));
 
-        this.setMajorityMaxAgeMode(); // Set default reset mode
+        this.setMajorityMaxAgeMode();
         this.startNewGeneration(initialCreatures);
 
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
         this.lastFrameTime = 0;
-        this.isPaused = false; // Ensure not paused on init
-        UIManager.togglePauseButton.textContent = 'Pause Simulation'; // Reset pause button text
-        UIManager.resetButton.textContent = 'Reset Simulation'; // Update reset button text
+        this.isPaused = false;
+        UIManager.togglePauseButton.textContent = 'Pause Simulation';
+        UIManager.resetButton.textContent = 'Reset Simulation';
         this.gameLoop();
     }
 
@@ -341,19 +336,16 @@ export class Simulation {
     endGenerationAndStartNewOne() {
         const allCreaturesInGeneration = [...this.creatures];
 
-        // Calculate fitness for all creatures before updating charts or selecting parents
         for (const creature of allCreaturesInGeneration) {
             creature.fitness = creature.calculateFitness(this.biomeMap);
         }
 
         ChartManager.updateChartsData(allCreaturesInGeneration, this.currentGenerationNumber);
 
-        // Sort creatures by fitness to select the fittest parents
         const sortedCreatures = [...allCreaturesInGeneration].sort((a, b) => b.fitness - a.fitness);
 
         const newGenerationCreatures = [];
 
-        // --- Elitism: Carry over the top N fittest creatures ---
         const eliteCount = Math.floor(SIM_CONFIG.FIXED_POPULATION_SIZE * SIM_CONFIG.ELITE_PERCENTAGE);
         for (let i = 0; i < eliteCount; i++) {
             if (sortedCreatures[i]) {
@@ -361,7 +353,6 @@ export class Simulation {
             }
         }
 
-        // Select parents from the remaining fittest for crossover and mutation
         const numParentsForBreeding = Math.max(2, Math.floor(SIM_CONFIG.FIXED_POPULATION_SIZE * SIM_CONFIG.PARENT_SELECTION_PERCENTAGE));
         const parents = sortedCreatures.slice(0, numParentsForBreeding);
 
@@ -374,36 +365,27 @@ export class Simulation {
             return;
         }
 
-        // Fill the rest of the population through crossover and mutation
         while (newGenerationCreatures.length < SIM_CONFIG.FIXED_POPULATION_SIZE) {
             const parent1 = parents[Math.floor(Math.random() * parents.length)];
             let parent2 = parent1;
-            // Ensure parent2 is different from parent1 for diversity in crossover
             while (parent2 === parent1) {
                 parent2 = parents[Math.floor(Math.random() * parents.length)];
             }
 
-            // Apply reproduction energy cost to parents
             parent1.energy -= SIM_CONFIG.REPRODUCTION_ENERGY_COST / 2;
             parent2.energy -= SIM_CONFIG.REPRODUCTION_ENERGY_COST / 2;
-            // Ensure energy doesn't go below zero
             parent1.energy = Math.max(0, parent1.energy);
             parent2.energy = Math.max(0, parent2.energy);
 
-
-            // Crossover brains
             const offspringBrain = NeuralNetwork.crossover(parent1.brain, parent2.brain);
-            // Mutate offspring brain
             const mutatedOffspringBrain = offspringBrain.cloneAndMutate(offspringBrain, (parent1.fitness + parent2.fitness) / 2, this.mutationRate, this.mutationStrength);
 
-            // Mutate physical and new genetic traits
             const offspringSpeed = parent1.speed + (Math.random() - 0.5) * this.mutationStrength;
             const offspringSize = parent1.size + (Math.random() - 0.5) * this.mutationStrength * 1.5;
             const offspringVisionRange = parent1.mutateVisionRange(parent1.visionRange, this.mutationRate, this.mutationStrength);
             const offspringLifespan = parent1.mutateLifespan(parent1.lifespan, this.mutationRate, this.mutationStrength);
             const offspringBiomePreference = parent1.mutateBiomePreference(parent1.biomePreference, this.mutationRate, this.mutationStrength);
 
-            // New trait mutations
             const offspringDietType = parent1.mutateDietType(parent1.dietType, this.mutationRate);
             const offspringAttackPower = parent1.mutateAttackPower(parent1.attackPower, this.mutationRate, this.mutationStrength);
             const offspringDefense = parent1.mutateDefense(parent1.defense, this.mutationRate, this.mutationStrength);
@@ -412,7 +394,6 @@ export class Simulation {
             const offspringClutchSize = parent1.mutateClutchSize(parent1.clutchSize, this.mutationRate, this.mutationStrength);
             const offspringSensoryRange = parent1.mutateSensoryRange(parent1.sensoryRange, this.mutationRate, this.mutationStrength);
             const offspringOptimalTemperature = parent1.mutateOptimalTemperature(parent1.optimalTemperature, this.mutationRate, this.mutationStrength);
-
 
             newGenerationCreatures.push(new Creature({
                 x: Math.random() * SIM_CONFIG.WORLD_WIDTH,
@@ -424,7 +405,6 @@ export class Simulation {
                 visionRange: clamp(offspringVisionRange, 50, 300),
                 lifespan: offspringLifespan,
                 biomePreference: offspringBiomePreference,
-                // Pass new mutated traits
                 dietType: offspringDietType,
                 attackPower: offspringAttackPower,
                 defense: offspringDefense,
@@ -449,13 +429,20 @@ export class Simulation {
         this.lastGenerationStartTime = performance.now();
 
         this.creatures = newCreatures;
-        this.resetAndSpawnAllFood(this.foodCount); // Reset food for new generation
+        this.resetAndSpawnAllFood(this.foodCount);
 
+        // Update control panel stats
         UIManager.updateGenerationCount(this.currentGenerationNumber);
         UIManager.updatePopulationCount(this.creatures.filter(c => c.isAlive).length);
         UIManager.updateGenerationProgress(0);
+
+        // Update overlay stats
+        UIManager.updateOverlayGenerationCount(this.currentGenerationNumber);
+        UIManager.updateOverlayPopulationCount(this.creatures.filter(c => c.isAlive).length);
+        UIManager.updateOverlayGenerationProgress(0);
+        UIManager.updateOverlayCurrentTemperature(this.currentWorldTemperature);
+
         UIManager.updateBrainDisplays(this.creatures);
-        UIManager.updateCurrentTemperature(this.currentWorldTemperature); // Update overlay temp on new gen
     }
 
     /**
@@ -463,7 +450,7 @@ export class Simulation {
      * @param {DOMHighResTimeStamp} timestamp - The current time provided by requestAnimationFrame.
      */
     gameLoop(timestamp) {
-        if (!this.isPaused) { // Only update if not paused
+        if (!this.isPaused) {
             if (timestamp < this.lastFrameTime + this.msPerFrame) {
                 this.animationFrameId = requestAnimationFrame((ts) => this.gameLoop(ts));
                 return;
@@ -474,11 +461,9 @@ export class Simulation {
             this.update();
             this.draw();
         } else {
-            // If paused, we still want to draw once to ensure the current state is visible
-            // but we don't need to update the simulation logic.
-            // The draw call is implicitly handled by the requestAnimationFrame loop
-            // as long as the loop continues to run, even if update() is skipped.
-            // We can explicitly call draw if we want to ensure a refresh, but usually not needed.
+            // If paused, we still want to draw once to ensure the current state is visible.
+            // No need to explicitly call draw() here as requestAnimationFrame will eventually
+            // trigger it again, but without an update.
         }
 
         this.animationFrameId = requestAnimationFrame((ts) => this.gameLoop(ts));
@@ -491,10 +476,8 @@ export class Simulation {
         this.simulationFrameCount++;
         const currentTime = performance.now();
 
-        // New: Simulate world temperature fluctuations (simple sine wave)
-        this.currentWorldTemperature = 0.5 + Math.sin(this.simulationFrameCount * 0.01) * 0.4; // Ranges from 0.1 to 0.9
-        UIManager.updateCurrentTemperature(this.currentWorldTemperature); // Update overlay
-
+        this.currentWorldTemperature = 0.5 + Math.sin(this.simulationFrameCount * 0.01) * 0.4;
+        UIManager.updateOverlayCurrentTemperature(this.currentWorldTemperature);
 
         let generationEnded = false;
         let aliveCreaturesThisFrame = 0;
@@ -503,14 +486,12 @@ export class Simulation {
         for (let i = this.creatures.length - 1; i >= 0; i--) {
             const creature = this.creatures[i];
             if (creature.isAlive) {
-                creature.update(this.biomeMap, this.food, this.creatures, this.mutationRate, this.mutationStrength, this.currentWorldTemperature); // Pass currentWorldTemperature
+                creature.update(this.biomeMap, this.food, this.creatures, this.mutationRate, this.mutationStrength, this.currentWorldTemperature);
 
-                // Collision detection for eating and combat
                 for (let j = this.food.length - 1; j >= 0; j--) {
                     const f = this.food[j];
                     const dist = Math.sqrt((creature.x - f.x) ** 2 + (creature.y - f.y) ** 2);
                     if (dist < creature.size + f.radius + SIM_CONFIG.COLLISION_RADIUS_OFFSET) {
-                        // Check if food type matches creature's diet
                         if ((creature.dietType === 0 && f.type === 'plant') || (creature.dietType === 1 && f.type === 'meat')) {
                              creature.eat(j, this.food, this.biomeMap);
                              break;
@@ -518,83 +499,70 @@ export class Simulation {
                     }
                 }
 
-                // New: Combat logic (only for carnivores)
-                if (creature.dietType === 1 && creature.energy > SIM_CONFIG.COMBAT_ENERGY_COST * 2) { // Only attack if enough energy
+                if (creature.dietType === 1 && creature.energy > SIM_CONFIG.COMBAT_ENERGY_COST * 2) {
                     for (let k = this.creatures.length - 1; k >= 0; k--) {
                         const otherCreature = this.creatures[k];
-                        // Carnivore attacks non-carnivore AND not self AND is alive
                         if (creature !== otherCreature && otherCreature.isAlive && otherCreature.dietType !== 1) {
                             const combatHappened = creature.engageCombat(otherCreature);
                             if (combatHappened) {
-                                // If target died, it will be removed in the next filter pass
-                                break; // Only one combat per creature per frame for simplicity
+                                break;
                             }
                         }
                     }
                 }
 
-                // New: Mating logic (if two creatures are close and both have enough energy and off cooldown)
                 if (creature.currentReproductionCooldown <= 0 && creature.energy >= SIM_CONFIG.REPRODUCTION_THRESHOLD) {
-                    for (let k = i + 1; k < this.creatures.length; k++) { // Check only creatures after current to avoid double counting
+                    for (let k = i + 1; k < this.creatures.length; k++) {
                         const mate = this.creatures[k];
                         if (mate.isAlive && mate.currentReproductionCooldown <= 0 && mate.energy >= SIM_CONFIG.REPRODUCTION_THRESHOLD) {
                             const dist = Math.sqrt((creature.x - mate.x)**2 + (creature.y - mate.y)**2);
                             if (dist < SIM_CONFIG.MATING_RANGE) {
-                                // Both creatures mate, reproduction happens in endGenerationAndStartNewOne
-                                // For now, just reset cooldowns and mark energy cost
                                 creature.currentReproductionCooldown = creature.reproductionCooldown;
                                 mate.currentReproductionCooldown = mate.reproductionCooldown;
                                 creature.energy -= SIM_CONFIG.REPRODUCTION_ENERGY_COST / 2;
                                 mate.energy -= SIM_CONFIG.REPRODUCTION_ENERGY_COST / 2;
                                 creature.energy = Math.max(0, creature.energy);
                                 mate.energy = Math.max(0, mate.energy);
-                                break; // Only one mating per creature per frame for simplicity
+                                break;
                             }
                         }
                     }
                 }
-
 
                 if (creature.isAlive) {
                     aliveCreaturesThisFrame++;
                 }
             } else {
                 maxAgeReachedCount++;
-                // New: If a creature dies, spawn meat at its location
-                // Check if it died from energy depletion or age, and if it's not a carnivore that was eaten
-                // Simplified: always drop meat if energy <= 0.
                 if (creature.energy <= 0) {
                     this.food.push(new Food(creature.x, creature.y, 'meat', SIM_CONFIG.MEAT_FROM_DEAD_CREATURE));
                 }
             }
         }
 
-        // Remove dead creatures
         this.creatures = this.creatures.filter(c => c.isAlive);
 
-        this.replenishFoodGradually(); // Call the new gradual food spawning
+        this.replenishFoodGradually();
 
+        // Update control panel stats
         UIManager.updatePopulationCount(aliveCreaturesThisFrame);
-        UIManager.updateGenerationCount(this.currentGenerationNumber); // Update control panel gen count
-        UIManager.updateGenerationProgress(Math.min(100, Math.floor((this.simulationFrameCount / this.maxAgeFrames) * 100))); // Update control panel progress
+        const progress = Math.min(100, Math.floor((this.simulationFrameCount / this.maxAgeFrames) * 100));
+        UIManager.updateGenerationProgress(progress);
+
+        // Update overlay stats
+        UIManager.updateOverlayPopulationCount(aliveCreaturesThisFrame);
+        UIManager.updateOverlayGenerationProgress(progress);
 
 
         if (this.currentGenerationEndMode === 'majorityMaxAge') {
-            // In this mode, we check against the global maxAgeFrames derived from the slider,
-            // or if all creatures are dead.
             const majorityReached = maxAgeReachedCount > (SIM_CONFIG.FIXED_POPULATION_SIZE / 2);
             if (majorityReached || aliveCreaturesThisFrame === 0) {
                 generationEnded = true;
             }
-            const progress = Math.min(100, Math.floor((maxAgeReachedCount / SIM_CONFIG.FIXED_POPULATION_SIZE) * 100));
-            UIManager.updateGenerationProgress(progress);
         } else if (this.currentGenerationEndMode === 'fixedTime') {
             if (currentTime - this.lastGenerationStartTime >= this.fixedTimeGenerationLengthMs) {
                 generationEnded = true;
             }
-            const elapsed = currentTime - this.lastGenerationStartTime;
-            const progress = Math.min(100, Math.floor((elapsed / this.fixedTimeGenerationLengthMs) * 100));
-            UIManager.updateGenerationProgress(progress);
         }
 
         if (generationEnded) {
@@ -618,15 +586,13 @@ export class Simulation {
         let highestFitness = -1;
 
         for (const creature of this.creatures) {
-            creature.draw(this.ctx, this.showHealthBars); // Pass showHealthBars
-            // Calculate fitness here again for display highlighting, as it might change
+            creature.draw(this.ctx, this.showHealthBars);
             if (creature.isAlive && creature.calculateFitness(this.biomeMap) > highestFitness) {
                 highestFitness = creature.calculateFitness(this.biomeMap);
                 bestCreature = creature;
             }
         }
 
-        // Highlight the best creature with a yellow ring
         if (bestCreature) {
             this.ctx.beginPath();
             this.ctx.arc(bestCreature.x, bestCreature.y, bestCreature.size + 3, 0, Math.PI * 2);
@@ -635,6 +601,6 @@ export class Simulation {
             this.ctx.stroke();
         }
 
-        UIManager.drawMiniMap(this.creatures, this.biomeMap); // Draw mini-map
+        UIManager.drawMiniMap(this.creatures, this.biomeMap);
     }
 }
