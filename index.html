@@ -35,12 +35,16 @@
                     <input type="range" id="foodCountSlider" min="50" max="1000" value="300" step="10">
                 </div>
                 <div class="slider-group">
-                    <label for="maxAgeSlider">Max Creature Age: <span id="maxAgeValue">50</span>s</label>
-                    <input type="range" id="maxAgeSlider" min="10" max="120" value="50" step="5">
+                    <label for="initialLifespanSlider">Initial Lifespan: <span id="initialLifespanValue">50</span>s</label>
+                    <input type="range" id="initialLifespanSlider" min="10" max="120" value="50" step="5">
                 </div>
                 <div class="slider-group">
                     <label for="visionRangeSlider">Vision Range: <span id="visionRangeValue">100</span>px</label>
                     <input type="range" id="visionRangeSlider" min="50" max="300" value="100" step="10">
+                </div>
+                <div class="slider-group">
+                    <label for="initialBiomePreferenceSlider">Initial Biome Preference: <span id="initialBiomePreferenceValue">0</span></label>
+                    <input type="range" id="initialBiomePreferenceSlider" min="0" max="4" value="0" step="1">
                 </div>
 
                 <button id="toggleFoodButton">Toggle Food Visibility</button>
@@ -83,6 +87,14 @@
             <div class="chart-container">
                 <h3>Average Vision Range Over Generations</h3>
                 <canvas id="visionRangeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Lifespan Over Generations</h3>
+                <canvas id="lifespanChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Average Biome Preference Over Generations</h3>
+                <canvas id="biomePreferenceChart"></canvas>
             </div>
         </div>
 
